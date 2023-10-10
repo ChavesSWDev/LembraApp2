@@ -14,7 +14,6 @@ import CadastroInicial from './components/CadastroInicial';
 import MainMenu from './components/MainMenu';
 import Form from './components/form';
 
-
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -100,6 +99,7 @@ export default function App() {
     </NavigationContainer>
   );
 }
+
 
 //Set-ExecutionPolicy RemoteSigned
 //npm install -g expo-cli
