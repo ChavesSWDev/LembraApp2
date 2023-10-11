@@ -24,6 +24,7 @@ const db = SQLite.openDatabase('BancoLembraAi.db');
 //   );
 
 
+
 export default function ConnectBanco() {
   useEffect(() => {
     // Step 3: Create the 'Estabelecimento' table if it doesn't exist
@@ -34,7 +35,7 @@ export default function ConnectBanco() {
           Nome TEXT NOT NULL,
           CNPJ INTEGER NOT NULL,
           Servicos TEXT,
-          Logotipo TEXT
+          Logotipo BLOB NOT NULL
         );`,
         [],
         (_, result) => {

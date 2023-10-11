@@ -13,6 +13,8 @@ import Tutorial from './components/Tutorial';
 import CadastroInicial from './components/CadastroInicial';
 import MainMenu from './components/MainMenu';
 import Form from './components/form';
+import * as SQLite from 'expo-sqlite';
+const db = SQLite.openDatabase('BancoLembraAi.db');
 
 const Stack = createNativeStackNavigator();
 

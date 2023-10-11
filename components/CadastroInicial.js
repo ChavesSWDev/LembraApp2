@@ -2,16 +2,19 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { Text, View, TextInput, Button, Image, StyleSheet } from 'react-native';
 import { ScrollView } from 'react-native';
-import ImagePicker from 'react-native-image-picker';
-import { Picker } from '@react-native-picker/picker';
 import * as SQLite from 'expo-sqlite';
 import ConnectBanco from './BancoLembraAi';
+import { Picker } from '@react-native-picker/picker';
+import * as ImagePicker from 'expo-image-picker';
+import { convertImageToBase64 } from './BancoLembraAi';
+
 function CadastroInicial() {
     const [nomeEstabelecimento, setNomeEstabelecimento] = useState('');
     const [cnpj, setCnpj] = useState('');
     const [logotipo, setLogotipo] = useState('');
     const [ramo, setRamo] = useState('');
-    const [selectedService, setSelectedService] = useState(''); // Adicione esta linha
+    const [selectedService, setSelectedService] = useState('');
+    const [base64Logotipo, setBase64Logotipo] = useState('');
     print(CadastroInicial);
     const db = SQLite.openDatabase('BancoLembraAi.db');
 
@@ -23,12 +26,37 @@ function CadastroInicial() {
         'Barbeiro',
     ];
 
-    
 
-    function handleCadastro() {
+    async function selectImage() {
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        if (permissionResult.granted === false) {
+            console.log('Permissão para acessar a galeria não concedida');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+        });
+
+        if (!result.cancelled && result.uri) {
+            // Atualize o estado 'logotipo' com a URI da imagem selecionada
+            setLogotipo(result.uri);
+
+            // Converta a imagem para uma string base64
+            const base64String = await convertImageToBase64(result.uri);
+
+            // Atualize o estado 'base64Logotipo' com a string base64
+            setBase64Logotipo(base64String);
+        }
+    }
+
+    async function handleCadastro() {
         try {
             const sql = 'INSERT INTO Estabelecimento (Nome, CNPJ, Servicos, Logotipo) VALUES (?, ?, ?, ?)';
-            const params = [nomeEstabelecimento, cnpj, selectedService, logotipo];
+            const params = [nomeEstabelecimento, cnpj, selectedService, base64Logotipo];
 
             db.transaction(async (tx) => {
                 tx.executeSql(sql, params);
@@ -41,15 +69,39 @@ function CadastroInicial() {
         }
     };
 
+    const ImageBase64 = ({ base64String }) => {
+        const source = {
+            uri: `data:image/png;base64,${base64String}`,
+        };
+
+        return <Image source={source} />;
+    };
+
     function handleIr() {
         navigation.navigate('MainMenu');
     }
-       
 
-    // const handleCadastro = () => {
-    //     navigation.navigate('MainMenu')
-    // };
 
+    const convertImageToBase64 = async (uri) => {
+        const response = await fetch(uri);
+        const buffer = await response.blob();
+
+        const base64String = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                if (reader.result) {
+                    resolve(reader.result);
+                } else {
+                    reject(new Error('Erro ao converter imagem para base64'));
+                }
+            };
+            reader.readAsDataURL(buffer);
+        });
+
+        return base64String;
+    };
+
+    
     return (
         <ScrollView style={styles.container}>
             <View style={styles.formGroup}>
@@ -90,7 +142,7 @@ function CadastroInicial() {
 
             <View style={styles.formGroup}>
                 <Text style={styles.label}>Logotipo:</Text>
-                <Button title="Selecionar Imagem" />
+                <Button title="Selecionar Imagem" onPress={selectImage} />
                 {logotipo && <Image source={{ uri: logotipo }} style={styles.logoImage} />}
             </View>
 

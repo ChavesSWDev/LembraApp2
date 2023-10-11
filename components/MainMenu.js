@@ -5,7 +5,49 @@ import * as SQLite from 'expo-sqlite';
 import { useNavigation } from '@react-navigation/native';
 const db = SQLite.openDatabase('BancoLembraAi.db');
 
+async function getEstabelecimentoLogo(id) {
+    const db = SQLite.openDatabase('BancoLembraAi.db');
+
+    const sql = 'SELECT Logotipo FROM Estabelecimento WHERE ID = ?';
+    const params = [id];
+
+    const [results] = await db.transactionAsync((tx) => {
+        tx.executeSql(sql, params);
+    });
+
+    const logotipoBase64 = await db.transactionAsync(async (tx) => {
+        const [results] = await tx.executeSql(
+            'SELECT Logotipo FROM Estabelecimento WHERE ID = ?',
+            [idEstabelecimento]
+        );
+
+        return results.rows.item(0).Logotipo;
+    });
+}
+
+
 const MainMenu = () => {
+    // const [estabelecimento, setEstabelecimento] = useState(null);
+
+    // const idEstabelecimento = 5; // Substitua pelo ID do estabelecimento que você deseja pegar a imagem
+
+    // useEffect(() => {
+    //     async function fetchEstabelecimento() {
+    //         const logotipoBase64 = await getEstabelecimentoLogo(idEstabelecimento);
+
+    //         setEstabelecimento({
+    //             ...estabelecimento,
+    //             logotipoBase64,
+    //         });
+    //     }
+
+    //     fetchEstabelecimento();
+    // }, [idEstabelecimento]);
+
+    // if (!estabelecimento) {
+    //     return <Text>Carregando...</Text>;
+    // }
+
     const [dados, setDados] = useState({
         Nome: '',
         CNPJ: '',
@@ -75,10 +117,10 @@ const MainMenu = () => {
                                 //     Servicos: registro["Servicos"],
                                 //     Logotipo: registro["Logotipo"],
                                 // });
-                                
-        setName(registro["Nome"]);
-        setCnpj(registro["CNPJ"]);
-        setRamo(registro["Servicos"]);
+
+                                setName(registro["Nome"]);
+                                setCnpj(registro["CNPJ"]);
+                                setRamo(registro["Servicos"]);
                                 console.log(registro);
                             }
                         }
@@ -93,8 +135,8 @@ const MainMenu = () => {
         // Chame a função para buscar os dados quando o componente for montado
         buscarDados();
 
-       // console.log('dados');
-       // console.log(dados);
+        // console.log('dados');
+        // console.log(dados);
 
         // Popula variáveis
     }, []);
@@ -102,10 +144,10 @@ const MainMenu = () => {
     return (
         <View style={styles.container}>
             <ConnectBanco />
-            <Image
-                source={require('./../assets/Imagens/Logos/LogoPadrao.png')}
+            {/* <Image
+                source={{ uri: `data:image/png;base64,${logotipoBase64}` }}
                 style={styles.logo}
-            />
+            /> */}
 
             <Text style={styles.label}>Estabelecimento</Text>
             <View style={styles.inputContainer}>
@@ -136,7 +178,7 @@ const MainMenu = () => {
             <View style={styles.inputContainer}>
                 <TextInput
                     style={styles.input}
-                    value={cnpj}
+                    value={String(cnpj)}
                     onChangeText={text => setCnpj(text)}
                     editable={isCnpjEditing}
                 />
