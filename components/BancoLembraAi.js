@@ -34,7 +34,7 @@ export default function ConnectBanco() {
           ID INTEGER PRIMARY KEY AUTOINCREMENT,
           Nome TEXT NOT NULL,
           CNPJ INTEGER NOT NULL,
-          Servicos TEXT,
+          Ramo TEXT,
           Logotipo BLOB NOT NULL
         );`,
         [],
@@ -45,8 +45,24 @@ export default function ConnectBanco() {
           console.error('Error creating table Estabelecimento:', error);
         }
       );
+
+      tx.executeSql(
+        `CREATE TABLE IF NOT EXISTS Servico (
+          ID INTEGER PRIMARY KEY AUTOINCREMENT,
+          Nome TEXT NOT NULL,
+          Ramo TEXT,
+          EstabelecimentoID INTEGER NOT NULL,
+          FOREIGN KEY (Ramo) REFERENCES Estabelecimento(Ramo)
+        );`,
+        [],
+        (_, result) => {
+          console.log('Table Servico created successfully');
+        },
+        (_, error) => {
+          console.error('Error creating table Servico:', error);
+        }
+      );
     });
-    
   }, []);
 
   return (

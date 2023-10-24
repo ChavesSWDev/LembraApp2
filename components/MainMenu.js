@@ -134,11 +134,6 @@ const MainMenu = () => {
 
         // Chame a função para buscar os dados quando o componente for montado
         buscarDados();
-
-        // console.log('dados');
-        // console.log(dados);
-
-        // Popula variáveis
     }, []);
 
     return (

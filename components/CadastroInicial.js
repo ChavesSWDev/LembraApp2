@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
-import { Text, View, TextInput, Button, Image, StyleSheet } from 'react-native';
+import { Text, View, TextInput, Button, Image, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { ScrollView } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 import ConnectBanco from './BancoLembraAi';
@@ -14,6 +14,9 @@ function CadastroInicial() {
     const [logotipo, setLogotipo] = useState('');
     const [ramo, setRamo] = useState('');
     const [selectedService, setSelectedService] = useState('');
+    const [serviceCount, setServiceCount] = useState(0);
+    const [relatedServices, setRelatedServices] = useState([]);
+    const [selectedRelatedService, setSelectedRelatedService] = useState('');
     const [base64Logotipo, setBase64Logotipo] = useState('');
     print(CadastroInicial);
     const db = SQLite.openDatabase('BancoLembraAi.db');
@@ -26,6 +29,48 @@ function CadastroInicial() {
         'Barbeiro',
     ];
 
+    const relatedServiceSalaoOptions = [
+        'Corte de cabelo',
+        'Manicure e pedicure',
+        'Maquiagem',
+        'Tratamentos para cabelos',
+        'Depilação'
+    ]
+
+    const relatedServiceOficinaOptions = [
+        'Troca de óleo',
+        'Troca de pneus',
+        'Revisão',
+        'Consertos',
+        'Instalação de acessórios',
+    ]
+
+    const relatedServiceBarbeiroOptions = [
+        'Corte de cabelo',
+        'Barba',
+        'Bigode',
+        'Depilação facial',
+        'Hidratação capilar',
+    ]
+
+    const addService = () => {
+        setServiceCount(serviceCount + 1);
+        setRelatedServices([...relatedServices, selectedRelatedService]);
+        setSelectedRelatedService('');
+    };
+
+    const getRelatedServices = () => {
+        switch (selectedService) {
+            case 'Salão de Beleza':
+                return relatedServiceSalaoOptions;
+            case 'Oficina Mecânica':
+                return relatedServiceOficinaOptions;
+            case 'Barbeiro':
+                return relatedServiceBarbeiroOptions;
+            default:
+                return [];
+        }
+    };
 
     async function selectImage() {
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -54,6 +99,20 @@ function CadastroInicial() {
     }
 
     async function handleCadastro() {
+        const areInputsFilled = () => {
+            return nomeEstabelecimento !== '' && cnpj !== '' && selectedService !== '';
+        };
+
+        if (!areInputsFilled()) {
+            Alert.alert('Aviso', 'Por favor preencha os campos vazios para continuar o cadastro', [
+                {
+                    text: 'Ok',
+                    onPress: () => { },
+                },
+            ]);
+            return;
+        }
+
         try {
             const sql = 'INSERT INTO Estabelecimento (Nome, CNPJ, Servicos, Logotipo) VALUES (?, ?, ?, ?)';
             const params = [nomeEstabelecimento, cnpj, selectedService, base64Logotipo];
@@ -63,11 +122,10 @@ function CadastroInicial() {
 
                 navigation.navigate('MainMenu');
             });
-
         } catch (error) {
             console.error('Erro ao cadastrar os dados', error);
         }
-    };
+    }
 
     const ImageBase64 = ({ base64String }) => {
         const source = {
@@ -80,6 +138,10 @@ function CadastroInicial() {
     function handleIr() {
         navigation.navigate('MainMenu');
     }
+
+    const areInputsFilled = () => {
+        return nomeEstabelecimento !== '' && cnpj !== '' && selectedService !== '';
+    };
 
 
     const convertImageToBase64 = async (uri) => {
@@ -101,7 +163,7 @@ function CadastroInicial() {
         return base64String;
     };
 
-    
+
     return (
         <ScrollView style={styles.container}>
             <View style={styles.formGroup}>
@@ -138,8 +200,35 @@ function CadastroInicial() {
                         ))}
                     </Picker>
                 </View>
+                {selectedService !== '' && (
+                    <TouchableOpacity onPress={addService}>
+                        <Text style={{ color: 'blue' }}>Adicionar serviço</Text>
+                    </TouchableOpacity>
+                )}
             </View>
-
+            {[...Array(serviceCount)].map((_, index) => (
+                <View key={index} style={{ marginBottom: 20 }}>
+                    <Text style={{ marginBottom: 10 }}>Serviço {index + 1}:</Text>
+                    <View style={{ marginBottom: 10 }}>
+                        <Picker
+                            selectedValue={relatedServices[index]}
+                            onValueChange={(itemValue) =>
+                                setRelatedServices([
+                                    ...relatedServices.slice(0, index),
+                                    itemValue,
+                                    ...relatedServices.slice(index + 1),
+                                ])
+                            }
+                            key={`${index}-${relatedServices[index]}`}
+                        >
+                            {getRelatedServices().map((service, index) => (
+                                <Picker.Item key={index} label={service} value={service} />
+                            ))}
+                        </Picker>
+                    </View>
+                </View>
+            ))}
+            
             <View style={styles.formGroup}>
                 <Text style={styles.label}>Logotipo:</Text>
                 <Button title="Selecionar Imagem" onPress={selectImage} />
