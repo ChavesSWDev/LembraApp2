@@ -95,7 +95,7 @@ const Agendar = () => {
                             }
                         },
                         (_, erro) => {
-                            console.error('Erro ao recuperar dados:', erro);
+                            console.error('Erro ao recuperar dados::', erro);
                         }
                     );
                 },
