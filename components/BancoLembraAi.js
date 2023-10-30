@@ -2,32 +2,46 @@ import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 
-// Step 1: Open the database (or create it if it doesn't exist)
 const db = SQLite.openDatabase('BancoLembraAi.db');
+// db.transaction(
+//   (tx) => {
+//     tx.executeSql(
+//       'DELETE FROM Estabelecimento',
+//       [],
+//       () => {
+//         console.log('Tabela Estabelecimento excluída com sucesso.');
+//       },
+//       (_, erro) => {
+//         console.error('Erro ao excluir tabela Estabelecimento:', erro);
+//       }
+//     );
+//   },
+//   (erro) => {
+//     console.error('Erro na transação', erro);
+//   }
+// );
 
 // db.transaction(
-//     (tx) => {
-//       tx.executeSql(
-//         'DELETE FROM Estabelecimento',
-//         [],
-//         () => {
-//           console.log('Tabela Estabelecimento excluída com sucesso.');
-//         },
-//         (_, erro) => { 
-//           console.error('Erro ao excluir tabela Estabelecimento:', erro);
-//         }
-//       );
-//     },
-//     (erro) => {
-//       console.error('Erro na transação', erro);
-//     }
-//   );
-
+//   (tx) => {
+//     tx.executeSql(
+//       'DELETE FROM Servico',
+//       [],
+//       () => {
+//         console.log('Tabela Servico excluída com sucesso.');
+//       },
+//       (_, erro) => {
+//         console.error('Erro ao excluir tabela Estabelecimento:', erro);
+//       }
+//     );
+//   },
+//   (erro) => {
+//     console.error('Erro na transação', erro);
+//   }
+// );
 
 
 export default function ConnectBanco() {
   useEffect(() => {
-    // Step 3: Create the 'Estabelecimento' table if it doesn't exist
     db.transaction((tx) => {
       tx.executeSql(
         `CREATE TABLE IF NOT EXISTS Estabelecimento (
@@ -39,10 +53,10 @@ export default function ConnectBanco() {
         );`,
         [],
         (_, result) => {
-          console.log('Table Estabelecimento created successfully');
+          console.log('Tabela Estabelecimento criada.');
         },
         (_, error) => {
-          console.error('Error creating table Estabelecimento:', error);
+          console.error('Erro ao criar a tabela Estabelecimento', error);
         }
       );
 
@@ -52,14 +66,30 @@ export default function ConnectBanco() {
           Nome TEXT NOT NULL,
           Ramo TEXT,
           EstabelecimentoID INTEGER NOT NULL,
-          FOREIGN KEY (Ramo) REFERENCES Estabelecimento(Ramo)
+          FOREIGN KEY (EstabelecimentoID) REFERENCES Estabelecimento(ID)
         );`,
         [],
         (_, result) => {
-          console.log('Table Servico created successfully');
+          console.log('Tabela Servico criada.');
         },
         (_, error) => {
-          console.error('Error creating table Servico:', error);
+          console.error('Erro ao criar a tabela Servico.', error);
+        }
+      );
+
+      tx.executeSql(
+        `CREATE TABLE IF NOT EXISTS Agendamento (
+          Nome TEXT NOT NULL,
+          Telefone TEXT NOT NULL,
+          Data TEXT NOT NULL,
+          Horario TEXT NOT NULL
+        );`,
+        [],
+        (_, result) => {
+          console.log('Tabela Agendamento criada.');
+        },
+        (_, error) => {
+          console.error('Erro ao criar a tabela Agendamento.', error);
         }
       );
     });
@@ -67,7 +97,7 @@ export default function ConnectBanco() {
 
   return (
     <View>
-      {/* Your React Native components go here */}
+
     </View>
   );
 }

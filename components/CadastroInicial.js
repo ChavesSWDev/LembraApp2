@@ -18,8 +18,9 @@ function CadastroInicial() {
     const [relatedServices, setRelatedServices] = useState([]);
     const [selectedRelatedService, setSelectedRelatedService] = useState('');
     const [base64Logotipo, setBase64Logotipo] = useState('');
+    const [selectedServices, setSelectedServicess] = useState([]);
     print(CadastroInicial);
-    const db = SQLite.openDatabase('BancoLembraAi.db');
+    const db = SQLite.openDatabase('./BancoLembraAi.db');
 
     const navigation = useNavigation();
 
@@ -52,6 +53,27 @@ function CadastroInicial() {
         'Depilação facial',
         'Hidratação capilar',
     ]
+
+    const executeSql = async (sql, params) => {
+        return new Promise((resolve, reject) => {
+            db.transaction((tx) => {
+                tx.executeSql(sql, params, (_, result) => {
+                    console.log('Query executada com sucesso:', result);
+                    resolve(result);
+                }, (_, error) => {
+                    console.error('Erro ao executar a query:', error);
+                    reject(error);
+                });
+            });
+        });
+    };
+
+    const addServices = () => {
+        // Incrementa o contador de serviços
+        setServiceCounts((prevCount) => prevCount + 1);
+        // Adiciona o serviço selecionado ao array de serviços
+        setSelectedServicess((prevServices) => [...prevServices, selectedService]);
+    };
 
     const addService = () => {
         setServiceCount(serviceCount + 1);
@@ -98,9 +120,22 @@ function CadastroInicial() {
         }
     }
 
+    // Insere os dados dos serviços selecionados na tabela Servico
+    const insertServices = async () => {
+        // Cria a query SQL para inserir um serviço
+        const sql = `INSERT INTO Servico (Nome, Ramo, EstabelecimentoID) VALUES (?, ?, ?)`;
+        // Percorre o array de serviços selecionados        
+        for (let i = 0; i < relatedServices.length; i++) {
+            // Define os parâmetros para inserir o serviço
+            const params = [relatedServices[i], selectedService, cnpj];
+            // Usa a função executeSql para inserir o serviço no banco de dados
+            await executeSql(sql, params);
+        }
+    };
+
     async function handleCadastro() {
         const areInputsFilled = () => {
-            return nomeEstabelecimento !== '' && cnpj !== '' && selectedService !== '';
+            return nomeEstabelecimento.length && cnpj.length && selectedService.length;
         };
 
         if (!areInputsFilled()) {
@@ -114,17 +149,45 @@ function CadastroInicial() {
         }
 
         try {
-            const sql = 'INSERT INTO Estabelecimento (Nome, CNPJ, Servicos, Logotipo) VALUES (?, ?, ?, ?)';
+            // Verifica se a tabela Estabelecimento já tem algum registro
+            // const count = await new Promise((resolve, reject) => {
+            //     db.transaction((tx) => {
+            //         tx.executeSql('SELECT COUNT(*) AS total FROM Estabelecimento', [], (_, result) => {
+            //             console.log('Número de registros na tabela Estabelecimento:', result.rows.item(0).total);
+            //             resolve(result.rows.item(0).total);
+            //         }, (_, error) => {
+            //             console.error('Erro ao contar os registros na tabela Estabelecimento:', error);
+            //             reject(error);
+            //         });
+            //     });
+            // });
+
+            // // Se o número de
+            //                 navigation.navigate('MainMenu');
+            //             },
+            //         },
+            //     ]);
+            // } else {
+            // Se o número de registros for igual a zero, tenta inserir o novo registro
+            const sql = `INSERT INTO EstabelecimentoΩ (Nome, CNPJ, Ramo, Logotipo) VALUES (?, ?, ?, ?)`;
             const params = [nomeEstabelecimento, cnpj, selectedService, base64Logotipo];
 
-            db.transaction(async (tx) => {
-                tx.executeSql(sql, params);
 
-                navigation.navigate('MainMenu');
+            db.transaction(async (tx) => {
+                tx.executeSql(sql, params, (_, result) => {
+                    console.log('Dados cadastrados com sucesso:', result);
+                }, (_, error) => {
+                    console.error('Erro ao cadastrar os dados:', error);
+                });
             });
+
+            await insertServices();
+            navigation.navigate('MainMenu');
+            // }
         } catch (error) {
             console.error('Erro ao cadastrar os dados', error);
         }
+
     }
 
     const ImageBase64 = ({ base64String }) => {
@@ -228,7 +291,7 @@ function CadastroInicial() {
                     </View>
                 </View>
             ))}
-            
+
             <View style={styles.formGroup}>
                 <Text style={styles.label}>Logotipo:</Text>
                 <Button title="Selecionar Imagem" onPress={selectImage} />
@@ -239,11 +302,9 @@ function CadastroInicial() {
                 <Button title="Cadastrar" onPress={handleCadastro} style={styles.button} />
             </View>
 
-            <View>
-                <Text style={styles.textCadastrado}>
-                    Já tem o seu negócio? Clique <Text onPress={handleIr} style={styles.textCadastradoRed}>aqui</Text>
-                </Text>
-            </View>
+            <Text style={styles.textCadastrado}>
+                Já tem o seu negócio? Clique <Text onPress={handleIr} style={styles.textCadastradoRed}>aqui</Text>
+            </Text>
         </ScrollView>
     );
 }

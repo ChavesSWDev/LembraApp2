@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import ConnectBanco from './BancoLembraAi';
 import * as SQLite from 'expo-sqlite';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 const db = SQLite.openDatabase('BancoLembraAi.db');
+import * as Style from '../assets/styles';
+import { selectLogo } from '../utils/pega-imagem';
 
 async function getEstabelecimentoLogo(id) {
     const db = SQLite.openDatabase('BancoLembraAi.db');
@@ -27,27 +29,6 @@ async function getEstabelecimentoLogo(id) {
 
 
 const MainMenu = () => {
-    // const [estabelecimento, setEstabelecimento] = useState(null);
-
-    // const idEstabelecimento = 5; // Substitua pelo ID do estabelecimento que você deseja pegar a imagem
-
-    // useEffect(() => {
-    //     async function fetchEstabelecimento() {
-    //         const logotipoBase64 = await getEstabelecimentoLogo(idEstabelecimento);
-
-    //         setEstabelecimento({
-    //             ...estabelecimento,
-    //             logotipoBase64,
-    //         });
-    //     }
-
-    //     fetchEstabelecimento();
-    // }, [idEstabelecimento]);
-
-    // if (!estabelecimento) {
-    //     return <Text>Carregando...</Text>;
-    // }
-
     const [dados, setDados] = useState({
         Nome: '',
         CNPJ: '',
@@ -63,6 +44,7 @@ const MainMenu = () => {
     const [originalName, setOriginalName] = useState(name);
     const [originalCnpj, setOriginalCnpj] = useState(cnpj);
     const [originalRamo, setOriginalRamo] = useState(ramo);
+    const [agendamentos, setAgendamentos] = useState([]);
 
     const handleEditName = () => {
         setNameEditing(true);
@@ -100,7 +82,6 @@ const MainMenu = () => {
     }
 
     useEffect(() => {
-        // Função para buscar os dados do banco de dados
         const buscarDados = async () => {
             await db.transaction((tx) => {
                 tx.executeSql(
@@ -108,19 +89,11 @@ const MainMenu = () => {
                     [],
                     (_, resultado) => {
                         if (resultado.rows.length > 0) {
-                            // Supondo que você deseja apenas o primeiro registro encontrado
                             for (let i = 0; i < resultado.rows.length; i++) {
                                 const registro = resultado.rows.item(i);
-                                // setDados({
-                                //     Nome: registro["Nome"],
-                                //     CNPJ: registro["CNPJ"],
-                                //     Servicos: registro["Servicos"],
-                                //     Logotipo: registro["Logotipo"],
-                                // });
-
                                 setName(registro["Nome"]);
                                 setCnpj(registro["CNPJ"]);
-                                setRamo(registro["Servicos"]);
+                                setRamo(registro["Ramo"]);
                                 console.log(registro);
                             }
                         }
@@ -131,98 +104,144 @@ const MainMenu = () => {
                 );
             });
         };
-
-        // Chame a função para buscar os dados quando o componente for montado
         buscarDados();
     }, []);
 
+    const fetchAgendamentos = () => {
+        db.transaction((tx) => {
+            tx.executeSql(
+                'SELECT Nome, Telefone, Data, Horario FROM Agendamento',
+                [],
+                (_, { rows }) => {
+                    const appointments = rows._array;
+                    setAgendamentos(appointments);
+                },
+                (_, error) => {
+                    console.error('Error fetching appointments:', error);
+                }
+            );
+        });
+    };
+
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchAgendamentos();
+        }, [])
+    );
+
+    const handleAgendar = () => {
+        navigation.navigate('Agendar', {
+            // estabelecimentoId: 
+        });
+    }
+
     return (
-        <View style={styles.container}>
-            <ConnectBanco />
-            {/* <Image
-                source={{ uri: `data:image/png;base64,${logotipoBase64}` }}
-                style={styles.logo}
-            /> */}
+        <ScrollView>
+            <View style={styles.container}>
+                <ConnectBanco />
 
-            <Text style={styles.label}>Estabelecimento</Text>
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    value={name}
-                    onChangeText={text => setName(text)}
-                    editable={isNameEditing}
-                />
-                {isNameEditing ? (
-                    <TouchableOpacity onPress={() => setNameEditing(false)}>
-                        <Text style={styles.editText}>Salvar</Text>
+                <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center'}} />
+
+                <Text style={styles.label}>Estabelecimento</Text>
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.input}
+                        value={name}
+                        onChangeText={text => setName(text)}
+                        editable={isNameEditing}
+                    />
+                    {isNameEditing ? (
+                        <TouchableOpacity onPress={() => setNameEditing(false)}>
+                            <Text style={styles.editText}>Salvar</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <TouchableOpacity onPress={handleEditName}>
+                            <Text style={styles.editText}>Editar</Text>
+                        </TouchableOpacity>
+                    )}
+                    {isNameEditing && (
+                        <TouchableOpacity onPress={() => handleCancelName(false)}>
+                            <Text style={styles.removeText}>Cancelar</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+
+                <Text style={styles.label}>CNPJ</Text>
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.input}
+                        value={String(cnpj)}
+                        onChangeText={text => setCnpj(text)}
+                        editable={isCnpjEditing}
+                    />
+                    {isCnpjEditing ? (
+                        <TouchableOpacity onPress={() => handleEditCnpj(false)}>
+                            <Text style={styles.editText}>Salvar</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <TouchableOpacity onPress={handleEditCnpj}>
+                            <Text style={styles.editText}>Editar</Text>
+                        </TouchableOpacity>
+                    )}
+                    {isCnpjEditing && (
+                        <TouchableOpacity onPress={() => handleCancelCnpj(false)}>
+                            <Text style={styles.removeText}>Cancelar</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                <Text style={styles.label}>Ramo</Text>
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.input}
+                        value={ramo}
+                        onChangeText={text => setRamo(text)}
+                        editable={isRamoEditing}
+                    />
+                    {isRamoEditing ? (
+                        <TouchableOpacity onPress={() => setRamoEditing(false)}>
+                            <Text style={styles.editText}>Salvar</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <TouchableOpacity onPress={handleEditRamo}>
+                            <Text style={styles.editText}>Editar</Text>
+                        </TouchableOpacity>
+                    )}
+                    {isRamoEditing && (
+                        <TouchableOpacity onPress={() => handleCancelRamo(false)}>
+                            <Text style={styles.removeText}>Cancelar</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                <View>
+                    <TouchableOpacity
+                        style={styles.button}
+                    >
+                        <Text onPress={handleAgendar} style={styles.buttonText}>Realizar agendamento</Text>
                     </TouchableOpacity>
-                ) : (
-                    <TouchableOpacity onPress={handleEditName}>
-                        <Text style={styles.editText}>Editar</Text>
-                    </TouchableOpacity>
-                )}
-                {isNameEditing && (
-                    <TouchableOpacity onPress={() => handleCancelName(false)}>
-                        <Text style={styles.removeText}>Cancelar</Text>
-                    </TouchableOpacity>
-                )}
+                </View>
+
+                <View>
+                    <Text style={styles.TextoAzul}>Agendamentos Programados</Text>
+                </View>
+                {agendamentos.map((appointment, index) => {
+                    return (<View style={styles.containerAgendamentos} key={index}>
+                        <Text style={styles.containerAgendamentosTexto}>{`Nome: ${appointment.Nome}`}</Text>
+                        <Text style={styles.containerAgendamentosTexto}>{`Telefone: ${appointment.telefone}`}</Text>
+                        <Text style={styles.containerAgendamentosTexto}>{`Data: ${appointment.data}`}</Text>
+                        <Text style={styles.containerAgendamentosTexto}>{`Horário: ${appointment.horario}`}</Text>
+                    </View>)
+                })}
+
+                <View>
+                    <Text style={styles.textCadastrado}>
+                        <Text onPress={handleIr} style={styles.textCadastradoRed}>Voltar</Text>
+                    </Text>
+                </View>
             </View>
-
-
-            <Text style={styles.label}>CNPJ</Text>
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    value={String(cnpj)}
-                    onChangeText={text => setCnpj(text)}
-                    editable={isCnpjEditing}
-                />
-                {isCnpjEditing ? (
-                    <TouchableOpacity onPress={() => handleEditCnpj(false)}>
-                        <Text style={styles.editText}>Salvar</Text>
-                    </TouchableOpacity>
-                ) : (
-                    <TouchableOpacity onPress={handleEditCnpj}>
-                        <Text style={styles.editText}>Editar</Text>
-                    </TouchableOpacity>
-                )}
-                {isCnpjEditing && (
-                    <TouchableOpacity onPress={() => handleCancelCnpj(false)}>
-                        <Text style={styles.removeText}>Cancelar</Text>
-                    </TouchableOpacity>
-                )}
-            </View>
-
-            <Text style={styles.label}>Atividade</Text>
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    value={ramo}
-                    onChangeText={text => setRamo(text)}
-                    editable={isRamoEditing}
-                />
-                {isRamoEditing ? (
-                    <TouchableOpacity onPress={() => setRamoEditing(false)}>
-                        <Text style={styles.editText}>Salvar</Text>
-                    </TouchableOpacity>
-                ) : (
-                    <TouchableOpacity onPress={handleEditRamo}>
-                        <Text style={styles.editText}>Editar</Text>
-                    </TouchableOpacity>
-                )}
-                {isRamoEditing && (
-                    <TouchableOpacity onPress={() => handleCancelRamo(false)}>
-                        <Text style={styles.removeText}>Cancelar</Text>
-                    </TouchableOpacity>
-                )}
-            </View>
-
-            <View>
-                <Text style={styles.textCadastrado}>
-                    <Text onPress={handleIr} style={styles.textCadastradoRed}>Voltar</Text>
-                </Text>
-            </View>
-        </View>
+        </ScrollView>
     );
 };
 
@@ -231,12 +250,31 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         backgroundColor: '#f0f0f0',
+        marginTop: 50
+    },
+    containerAgendamentos: {
+        flex: 1,
+        marginTop: 30,
+        textAlign: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center'
+    },
+    containerAgendamentosTexto: {
+        fontWeight: 'bold',
+        fontSize: 16
     },
     logo: {
         width: 250,
         height: 250,
         marginBottom: 20,
         alignSelf: 'center'
+    },
+    textCadastrado: {
+        marginTop: 50,
+        marginLeft: 47
+    },
+    textCadastradoRed: {
+        color: 'red'
     },
     inputContainer: {
         flexDirection: 'row',
@@ -269,5 +307,27 @@ const styles = StyleSheet.create({
         textAlign: 'left',
         marginLeft: 55
     },
+    button: {
+        backgroundColor: Style.color,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+        marginHorizontal: 10,
+        marginBottom: 10,
+        marginTop: 50
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    TextoAzul: {
+        color: Style.color,
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginTop: 50
+    }
 });
 export default MainMenu;

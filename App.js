@@ -12,6 +12,7 @@ import BemVindo from './components/BemVindo';
 import Tutorial from './components/Tutorial';
 import CadastroInicial from './components/CadastroInicial';
 import MainMenu from './components/MainMenu';
+import Agendar from './components/Agendar';
 import Form from './components/form';
 import * as SQLite from 'expo-sqlite';
 const db = SQLite.openDatabase('BancoLembraAi.db');
@@ -94,6 +95,10 @@ export default function App() {
 
         <Stack.Screen name="MainMenu">
           {props => <MainMenu />}
+        </Stack.Screen>
+
+        <Stack.Screen name="Agendar">
+          {props => <Agendar/>}
         </Stack.Screen>
 
 
