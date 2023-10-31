@@ -40,6 +40,7 @@ const db = SQLite.openDatabase('BancoLembraAi.db');
 // );
 
 
+
 export default function ConnectBanco() {
   useEffect(() => {
     db.transaction((tx) => {

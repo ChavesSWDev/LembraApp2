@@ -10,58 +10,22 @@ const db = SQLite.openDatabase('BancoLembraAi.db');
 
 
 
-const Agendar = () => {
-    const relatedServiceSalaoOptions = [
-        'Corte de cabelo',
-        'Manicure e pedicure',
-        'Maquiagem',
-        'Tratamentos para cabelos',
-        'Depilação'
-    ]
+const EditarAgendamento = ({  navigation }) => {
+     const route = useRoute();
+console.log('asdasd' + route.params?.appointmentData);
 
-    const relatedServiceOficinaOptions = [
-        'Troca de óleo',
-        'Troca de pneus',
-        'Revisão',
-        'Consertos',
-        'Instalação de acessórios',
-    ]
-
-    const relatedServiceBarbeiroOptions = [
-        'Corte de cabelo',
-        'Barba',
-        'Bigode',
-        'Depilação facial',
-        'Hidratação capilar',
-    ]
-
-    const [dados, setDados] = useState({
-        Nome: '',
-        CNPJ: '',
-        Servicos: '',
-        Logotipo: '',
-    });
+    const { appointmentData } = route.params;
     const [ramo, setRamo] = useState('');
     const [selectedService, setSelectedService] = useState('');
-    const [nomeCliente, setNomeCliente] = useState('');
-    const [telefoneCliente, setTelefoneCliente] = useState('');
-    const [data, setData] = useState('');
-    const [horario, setHorario] = useState('');
-    const navigation = useNavigation();
+    const [nomeCliente, setNomeCliente] = useState(appointmentData.Nome);
+    const [telefoneCliente, setTelefoneCliente] = useState(appointmentData.Telefone);
+    const [data, setData] = useState(appointmentData.Data);
+    const [horario, setHorario] = useState(appointmentData.Horario);
+    //const navigation = useNavigation();
     const [serviceOptionss, setServiceOptionss] = useState([]);
     const [agendamentos, setAgendamentos] = useState([]);
 
-    const route = useRoute();
-    const { appointment } = route.params;
-
-    useEffect(() => {
-        if (appointment) {
-            setNomeCliente(appointment.Nome);
-            setTelefoneCliente(appointment.Telefone);
-            setData(appointment.Data);
-            setHorario(appointment.Horario);
-        }
-    }, [appointment]);
+    console.log(appointmentData);
 
     const handleAgendar = () => {
         if (!nomeCliente || !telefoneCliente || !data || !horario || !selectedService) {
@@ -70,9 +34,9 @@ const Agendar = () => {
         }
 
         const sql = `
-INSERT INTO Agendamento (Nome, Telefone, Data, Horario)
-VALUES (?, ?, ?, ?)
-`;
+                    INSERT INTO Agendamento (Nome, Telefone, Data, Horario)
+                    VALUES (?, ?, ?, ?)
+                    `;
 
         const params = [nomeCliente, telefoneCliente, data, horario];
         db.transaction((tx) => {
@@ -125,17 +89,6 @@ VALUES (?, ?, ?, ?)
 
         buscarDados();
     }, []);
-
-    let serviceOptions;
-    if (ramo === 'Salão de Beleza') {
-        serviceOptions = relatedServiceSalaoOptions;
-    } else if (ramo === 'Oficina Mecânica') {
-        serviceOptions = relatedServiceOficinaOptions;
-    } else if (ramo === 'Barbeiro') {
-        serviceOptions = relatedServiceBarbeiroOptions;
-    } else {
-        serviceOptions = [];
-    }
 
 
 
@@ -287,4 +240,4 @@ const styles = StyleSheet.create({
 
 });
 
-export default Agendar
+export default EditarAgendamento

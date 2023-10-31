@@ -169,7 +169,7 @@ function CadastroInicial() {
             //     ]);
             // } else {
             // Se o número de registros for igual a zero, tenta inserir o novo registro
-            const sql = `INSERT INTO EstabelecimentoΩ (Nome, CNPJ, Ramo, Logotipo) VALUES (?, ?, ?, ?)`;
+            const sql = `INSERT INTO Estabelecimento (Nome, CNPJ, Ramo, Logotipo) VALUES (?, ?, ?, ?)`;
             const params = [nomeEstabelecimento, cnpj, selectedService, base64Logotipo];
 
 

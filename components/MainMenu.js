@@ -102,9 +102,26 @@ const MainMenu = () => {
                         console.error('Erro ao buscar dados:', erro);
                     }
                 );
+
+                tx.executeSql(
+                    'SELECT * FROM Servico',
+                    [],
+                    (_, resultado2) => {
+                        if (resultado2.rows.length > 0) {
+                            for (let i = 0; i < resultado2.rows.length; i++) {
+                                const registro2 = resultado2.rows.item(i);
+                                console.log("Dados TB Servico: " + registro2.Nome)
+                            }
+                        }
+                    }
+                )
             });
         };
         buscarDados();
+    }, []);
+
+    useEffect(() => {
+        fetchAgendamentos();
     }, []);
 
     const fetchAgendamentos = () => {
@@ -123,6 +140,8 @@ const MainMenu = () => {
         });
     };
 
+
+
     useFocusEffect(
         React.useCallback(() => {
             fetchAgendamentos();
@@ -135,12 +154,17 @@ const MainMenu = () => {
         });
     }
 
+    const handleEditarAgendamento = (appointment) => {
+        navigation.navigate('EditarAgendamento', { appointmentData: appointment });
+
+    }
+
     return (
         <ScrollView>
             <View style={styles.container}>
                 <ConnectBanco />
 
-                <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center'}} />
+                <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center' }} />
 
                 <Text style={styles.label}>Estabelecimento</Text>
                 <View style={styles.inputContainer}>
@@ -227,12 +251,16 @@ const MainMenu = () => {
                     <Text style={styles.TextoAzul}>Agendamentos Programados</Text>
                 </View>
                 {agendamentos.map((appointment, index) => {
-                    return (<View style={styles.containerAgendamentos} key={index}>
-                        <Text style={styles.containerAgendamentosTexto}>{`Nome: ${appointment.Nome}`}</Text>
-                        <Text style={styles.containerAgendamentosTexto}>{`Telefone: ${appointment.telefone}`}</Text>
-                        <Text style={styles.containerAgendamentosTexto}>{`Data: ${appointment.data}`}</Text>
-                        <Text style={styles.containerAgendamentosTexto}>{`Horário: ${appointment.horario}`}</Text>
-                    </View>)
+                    return (
+                        <View style={styles.containerAgendamentos} key={index}>
+                            <TouchableOpacity key={index} onPress={() => handleEditarAgendamento()}>
+                                <Text style={styles.containerAgendamentosTexto}>{`Nome: ${appointment.Nome}`}</Text>
+                                <Text style={styles.containerAgendamentosTexto}>{`Telefone: ${appointment.Telefone}`}</Text>
+                                <Text style={styles.containerAgendamentosTexto}>{`Data: ${appointment.Data}`}</Text>
+                                <Text style={styles.containerAgendamentosTexto}>{`Horário: ${appointment.Horario}`}</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )
                 })}
 
                 <View>
