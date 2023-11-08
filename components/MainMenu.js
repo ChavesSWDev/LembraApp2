@@ -127,7 +127,7 @@ const MainMenu = () => {
     const fetchAgendamentos = () => {
         db.transaction((tx) => {
             tx.executeSql(
-                'SELECT Nome, Telefone, Data, Horario FROM Agendamento',
+                'SELECT Nome, Telefone, Data, Horario, Servicos FROM Agendamento',
                 [],
                 (_, { rows }) => {
                     const appointments = rows._array;
@@ -258,6 +258,8 @@ const MainMenu = () => {
                                 <Text style={styles.containerAgendamentosTexto}>{`Telefone: ${appointment.Telefone}`}</Text>
                                 <Text style={styles.containerAgendamentosTexto}>{`Data: ${appointment.Data}`}</Text>
                                 <Text style={styles.containerAgendamentosTexto}>{`Horário: ${appointment.Horario}`}</Text>
+                                <Text style={styles.containerAgendamentosTexto}>{`Serviços: ${appointment.Servicos}`}</Text>
+                                {console.log("Dados do serviço: " + appointment.Servicos)}
                             </TouchableOpacity>
                         </View>
                     )

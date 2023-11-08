@@ -39,6 +39,24 @@ const db = SQLite.openDatabase('BancoLembraAi.db');
 //   }
 // );
 
+// db.transaction(
+//   (tx) => {
+//     tx.executeSql(
+//       'DELETE FROM Agendamento',
+//       [],
+//       () => {
+//         console.log('Tabela Agendamento excluída com sucesso.');
+//       },
+//       (_, erro) => {
+//         console.error('Erro ao excluir tabela Agendamento:', erro);
+//       }
+//     );
+//   },
+//   (erro) => {
+//     console.error('Erro na transação', erro);
+//   }
+// );
+
 
 
 export default function ConnectBanco() {
@@ -83,7 +101,8 @@ export default function ConnectBanco() {
           Nome TEXT NOT NULL,
           Telefone TEXT NOT NULL,
           Data TEXT NOT NULL,
-          Horario TEXT NOT NULL
+          Horario TEXT NOT NULL,
+          Servicos TEXT NOT NULL
         );`,
         [],
         (_, result) => {

@@ -68,32 +68,6 @@ function CadastroInicial() {
         });
     };
 
-    const addServices = () => {
-        // Incrementa o contador de serviços
-        setServiceCounts((prevCount) => prevCount + 1);
-        // Adiciona o serviço selecionado ao array de serviços
-        setSelectedServicess((prevServices) => [...prevServices, selectedService]);
-    };
-
-    const addService = () => {
-        setServiceCount(serviceCount + 1);
-        setRelatedServices([...relatedServices, selectedRelatedService]);
-        setSelectedRelatedService('');
-    };
-
-    const getRelatedServices = () => {
-        switch (selectedService) {
-            case 'Salão de Beleza':
-                return relatedServiceSalaoOptions;
-            case 'Oficina Mecânica':
-                return relatedServiceOficinaOptions;
-            case 'Barbeiro':
-                return relatedServiceBarbeiroOptions;
-            default:
-                return [];
-        }
-    };
-
     async function selectImage() {
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -120,11 +94,28 @@ function CadastroInicial() {
         }
     }
 
+    const getRelatedServices = (selectedService) => {
+        switch (selectedService) {
+            case "Salão de Beleza":
+                return relatedServiceSalaoOptions;
+            case "Oficina Mecânica":
+                return relatedServiceOficinaOptions;
+            case "Barbeiro":
+                return relatedServiceBarbeiroOptions;
+            default:
+                return [];
+        }
+    };
+
     // Insere os dados dos serviços selecionados na tabela Servico
     const insertServices = async () => {
         // Cria a query SQL para inserir um serviço
         const sql = `INSERT INTO Servico (Nome, Ramo, EstabelecimentoID) VALUES (?, ?, ?)`;
-        // Percorre o array de serviços selecionados        
+
+        // Obtém os serviços relacionados ao ramo selecionado
+        const relatedServices = getRelatedServices(selectedService);
+
+        // Insere todos os serviços relacionados no banco de dados
         for (let i = 0; i < relatedServices.length; i++) {
             // Define os parâmetros para inserir o serviço
             const params = [relatedServices[i], selectedService, cnpj];
@@ -133,10 +124,10 @@ function CadastroInicial() {
         }
     };
 
+
+
     async function handleCadastro() {
-        const areInputsFilled = () => {
-            return nomeEstabelecimento.length && cnpj.length && selectedService.length;
-        };
+        areInputsFilled
 
         if (!areInputsFilled()) {
             Alert.alert('Aviso', 'Por favor preencha os campos vazios para continuar o cadastro', [
@@ -250,47 +241,22 @@ function CadastroInicial() {
             </View>
 
             <View style={styles.formGroup}>
-                <Text style={styles.label}>Serviços:</Text>
+                <Text style={styles.label}>Ramos:</Text>
                 <View style={styles.pickerContainer}>
                     <Picker
                         selectedValue={selectedService}
-                        onValueChange={(itemValue) => setSelectedService(itemValue)}
                         style={styles.picker}
+                        onValueChange={(itemValue) => {
+                            setSelectedService(itemValue);
+                        }}
                     >
-                        <Picker.Item label="Selecione um serviço" value="" />
+                        <Picker.Item label='Selecione um ramo' />
                         {serviceOptions.map((service, index) => (
                             <Picker.Item key={index} label={service} value={service} />
                         ))}
                     </Picker>
                 </View>
-                {selectedService !== '' && (
-                    <TouchableOpacity onPress={addService}>
-                        <Text style={{ color: 'blue' }}>Adicionar serviço</Text>
-                    </TouchableOpacity>
-                )}
             </View>
-            {[...Array(serviceCount)].map((_, index) => (
-                <View key={index} style={{ marginBottom: 20 }}>
-                    <Text style={{ marginBottom: 10 }}>Serviço {index + 1}:</Text>
-                    <View style={{ marginBottom: 10 }}>
-                        <Picker
-                            selectedValue={relatedServices[index]}
-                            onValueChange={(itemValue) =>
-                                setRelatedServices([
-                                    ...relatedServices.slice(0, index),
-                                    itemValue,
-                                    ...relatedServices.slice(index + 1),
-                                ])
-                            }
-                            key={`${index}-${relatedServices[index]}`}
-                        >
-                            {getRelatedServices().map((service, index) => (
-                                <Picker.Item key={index} label={service} value={service} />
-                            ))}
-                        </Picker>
-                    </View>
-                </View>
-            ))}
 
             <View style={styles.formGroup}>
                 <Text style={styles.label}>Logotipo:</Text>

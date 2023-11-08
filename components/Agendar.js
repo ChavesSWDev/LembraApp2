@@ -68,13 +68,13 @@ const Agendar = () => {
             console.log('Por favor, preencha todos os campos.');
             return;
         }
-
+        
         const sql = `
-INSERT INTO Agendamento (Nome, Telefone, Data, Horario)
-VALUES (?, ?, ?, ?)
+INSERT INTO Agendamento (Nome, Telefone, Data, Horario, Servicos)
+VALUES (?, ?, ?, ?, ?)
 `;
 
-        const params = [nomeCliente, telefoneCliente, data, horario];
+        const params = [nomeCliente, telefoneCliente, data, horario, selectedService];
         db.transaction((tx) => {
             tx.executeSql(
                 sql,
@@ -125,19 +125,6 @@ VALUES (?, ?, ?, ?)
 
         buscarDados();
     }, []);
-
-    let serviceOptions;
-    if (ramo === 'Salão de Beleza') {
-        serviceOptions = relatedServiceSalaoOptions;
-    } else if (ramo === 'Oficina Mecânica') {
-        serviceOptions = relatedServiceOficinaOptions;
-    } else if (ramo === 'Barbeiro') {
-        serviceOptions = relatedServiceBarbeiroOptions;
-    } else {
-        serviceOptions = [];
-    }
-
-
 
     return (
         <ScrollView>
