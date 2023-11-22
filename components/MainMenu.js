@@ -154,90 +154,15 @@ const MainMenu = () => {
         });
     }
 
-    const handleEditarAgendamento = (appointment) => {
+    const handleEditarAgendamento = (event, appointment) => {
+        event.preventDefault();
         navigation.navigate('EditarAgendamento', { appointmentData: appointment });
-
     }
 
     return (
         <ScrollView>
             <View style={styles.container}>
                 <ConnectBanco />
-
-                <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center' }} />
-
-                <Text style={styles.label}>Estabelecimento</Text>
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={styles.input}
-                        value={name}
-                        onChangeText={text => setName(text)}
-                        editable={isNameEditing}
-                    />
-                    {isNameEditing ? (
-                        <TouchableOpacity onPress={() => setNameEditing(false)}>
-                            <Text style={styles.editText}>Salvar</Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity onPress={handleEditName}>
-                            <Text style={styles.editText}>Editar</Text>
-                        </TouchableOpacity>
-                    )}
-                    {isNameEditing && (
-                        <TouchableOpacity onPress={() => handleCancelName(false)}>
-                            <Text style={styles.removeText}>Cancelar</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-
-
-                <Text style={styles.label}>CNPJ</Text>
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={styles.input}
-                        value={String(cnpj)}
-                        onChangeText={text => setCnpj(text)}
-                        editable={isCnpjEditing}
-                    />
-                    {isCnpjEditing ? (
-                        <TouchableOpacity onPress={() => handleEditCnpj(false)}>
-                            <Text style={styles.editText}>Salvar</Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity onPress={handleEditCnpj}>
-                            <Text style={styles.editText}>Editar</Text>
-                        </TouchableOpacity>
-                    )}
-                    {isCnpjEditing && (
-                        <TouchableOpacity onPress={() => handleCancelCnpj(false)}>
-                            <Text style={styles.removeText}>Cancelar</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-
-                <Text style={styles.label}>Ramo</Text>
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={styles.input}
-                        value={ramo}
-                        onChangeText={text => setRamo(text)}
-                        editable={isRamoEditing}
-                    />
-                    {isRamoEditing ? (
-                        <TouchableOpacity onPress={() => setRamoEditing(false)}>
-                            <Text style={styles.editText}>Salvar</Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity onPress={handleEditRamo}>
-                            <Text style={styles.editText}>Editar</Text>
-                        </TouchableOpacity>
-                    )}
-                    {isRamoEditing && (
-                        <TouchableOpacity onPress={() => handleCancelRamo(false)}>
-                            <Text style={styles.removeText}>Cancelar</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
 
                 <View>
                     <TouchableOpacity
@@ -250,21 +175,86 @@ const MainMenu = () => {
                 <View>
                     <Text style={styles.TextoAzul}>Agendamentos Programados</Text>
                 </View>
+                <View style={styles.ladoAlado}>
+                    <View style={styles.cardStatus}>
+                        <View style={styles.cardStatusCircleAtendido}></View>
+                        <Text style={styles.cardStatusText}>Atendido</Text>
+                    </View>
+                    <View style={styles.cardStatus}>
+                        <View style={styles.cardStatusCircleAtrasado}></View>
+                        <Text style={styles.cardStatusText}>Atrasado</Text>
+                    </View>
+                    <View style={styles.cardStatus}>
+                        <View style={styles.cardStatusCircleCancelado}></View>
+                        <Text style={styles.cardStatusText}>Cancelado</Text>
+                    </View>
+                    <View style={styles.cardStatus}>
+                        <View style={styles.cardStatusCircleEspera}></View>
+                        <Text style={styles.cardStatusText}>Aberto</Text>
+                    </View>
+                </View>
                 {agendamentos.map((appointment, index) => {
                     return (
-                        <View style={styles.containerAgendamentos} key={index}>
-                            <TouchableOpacity key={index} onPress={() => handleEditarAgendamento()}>
-                                <Text style={styles.containerAgendamentosTexto}>{`Nome: ${appointment.Nome}`}</Text>
-                                <Text style={styles.containerAgendamentosTexto}>{`Telefone: ${appointment.Telefone}`}</Text>
-                                <Text style={styles.containerAgendamentosTexto}>{`Data: ${appointment.Data}`}</Text>
-                                <Text style={styles.containerAgendamentosTexto}>{`Horário: ${appointment.Horario}`}</Text>
-                                <Text style={styles.containerAgendamentosTexto}>{`Serviços: ${appointment.Servicos}`}</Text>
-                                {console.log("Dados do serviço: " + appointment.Servicos)}
-                            </TouchableOpacity>
+                        <View>
+                            <View style={styles.card} key={index}>
+                                <TouchableOpacity key={index} onPress={handleEditarAgendamento} style={{ flexDirection: 'row' }}>
+                                    <View style={{ flex: 1 }}>
+                                        <View style={styles.cardHeader}>
+                                            <Text style={styles.cardHeaderText}>Nome: {appointment.Nome}</Text>
+                                        </View>
+                                        <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
+                                        <Text style={styles.cardText}>Data: {appointment.Data}</Text>
+                                        <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
+                                        <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
+                                    </View>
+                                    <View style={styles.rightSideGreen}></View>
+                                </TouchableOpacity>
+                            </View>
+                            <View style={styles.card} key={index}>
+                                <TouchableOpacity key={index} onPress={handleEditarAgendamento} style={{ flexDirection: 'row' }}>
+                                    <View style={{ flex: 1 }}>
+                                        <View style={styles.cardHeader}>
+                                            <Text style={styles.cardHeaderText}>Nome: {appointment.Nome}</Text>
+                                        </View>
+                                        <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
+                                        <Text style={styles.cardText}>Data: {appointment.Data}</Text>
+                                        <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
+                                        <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
+                                    </View>
+                                    <View style={styles.rightSideyellow}></View>
+                                </TouchableOpacity>
+                            </View>
+                            <View style={styles.card} key={index}>
+                                <TouchableOpacity key={index} onPress={handleEditarAgendamento} style={{ flexDirection: 'row' }}>
+                                    <View style={{ flex: 1 }}>
+                                        <View style={styles.cardHeader}>
+                                            <Text style={styles.cardHeaderText}>Nome: {appointment.Nome}</Text>
+                                        </View>
+                                        <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
+                                        <Text style={styles.cardText}>Data: {appointment.Data}</Text>
+                                        <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
+                                        <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
+                                    </View>
+                                    <View style={styles.rightSidered}></View>
+                                </TouchableOpacity>
+                            </View>
+                            <View style={styles.card} key={index}>
+                                <TouchableOpacity key={index} onPress={handleEditarAgendamento} style={{ flexDirection: 'row' }}>
+                                    <View style={{ flex: 1 }}>
+                                        <View style={styles.cardHeader}>
+                                            <Text style={styles.cardHeaderText}>Nome: {appointment.Nome}</Text>
+                                        </View>
+                                        <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
+                                        <Text style={styles.cardText}>Data: {appointment.Data}</Text>
+                                        <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
+                                        <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
+                                    </View>
+                                    <View style={styles.rightSideBlue}></View>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     )
                 })}
-
                 <View>
                     <Text style={styles.textCadastrado}>
                         <Text onPress={handleIr} style={styles.textCadastradoRed}>Voltar</Text>
@@ -282,16 +272,102 @@ const styles = StyleSheet.create({
         backgroundColor: '#f0f0f0',
         marginTop: 50
     },
-    containerAgendamentos: {
-        flex: 1,
-        marginTop: 30,
-        textAlign: 'center',
-        justifyContent: 'center',
-        alignSelf: 'center'
+    ladoAlado: {
+        alignSelf: 'center',
+        flexDirection: 'row',
+        marginTop: 10,
     },
-    containerAgendamentosTexto: {
+    card: {
+        backgroundColor: '#ffffff',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+        marginHorizontal: 10,
+        marginBottom: 10,
+        marginTop: 50,
+        elevation: 2
+    },
+    cardHeader: {
+        fontSize: 17,
         fontWeight: 'bold',
-        fontSize: 16
+    },
+    cardText: {
+        fontSize: 16,
+        color: Style.color2
+    },
+    rightSideGreen: {
+        backgroundColor: 'green',
+        borderTopRightRadius: 10,
+        borderBottomRightRadius: 10,
+        borderTopLeftRadius: 10,
+        borderBottomLeftRadius: 10,
+        width: 20,  // Adjust the width as needed
+    },
+    rightSideyellow: {
+        backgroundColor: 'yellow',
+        borderTopRightRadius: 10,
+        borderBottomRightRadius: 10,
+        borderTopLeftRadius: 10,
+        borderBottomLeftRadius: 10,
+        width: 20,  // Adjust the width as needed
+    },
+    rightSidered: {
+        backgroundColor: 'red',
+        borderTopRightRadius: 10,
+        borderBottomRightRadius: 10,
+        borderTopLeftRadius: 10,
+        borderBottomLeftRadius: 10,
+        width: 20,  // Adjust the width as needed
+    },
+    rightSideBlue: {
+        backgroundColor: Style.color,
+        borderTopRightRadius: 10,
+        borderBottomRightRadius: 10,
+        borderTopLeftRadius: 10,
+        borderBottomLeftRadius: 10,
+        width: 20,  // Adjust the width as needed
+    },
+    cardStatus: {
+        flexDirection: 'row', // Add this line to make the children align horizontally
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 5,
+        borderRadius: 10,
+        paddingBottom: 5
+    },
+    cardStatusCircleAtendido: {
+        backgroundColor: 'green',
+        width: 15,
+        height: 15,
+        borderRadius: 15,
+        marginRight: 5,
+    },
+    cardStatusCircleAtrasado: {
+        backgroundColor: 'yellow',
+        width: 15,
+        height: 15,
+        borderRadius: 15,
+        marginRight: 5,
+    },
+    cardStatusCircleCancelado: {
+        backgroundColor: 'red',
+        width: 15,
+        height: 15,
+        borderRadius: 15,
+        marginRight: 5,
+    },
+    cardStatusCircleEspera: {
+        backgroundColor: Style.color,
+        width: 15,
+        height: 15,
+        borderRadius: 15,
+        marginRight: 5,
+    },
+    cardStatusText: {
+        fontSize: 16,
+        textAlign: 'center',
+        color: 'black',
+        fontWeight: 'bold'
     },
     logo: {
         width: 250,
@@ -354,10 +430,12 @@ const styles = StyleSheet.create({
     },
     TextoAzul: {
         color: Style.color,
-        fontSize: 18,
+        fontSize: 22,
         fontWeight: 'bold',
         textAlign: 'center',
-        marginTop: 50
+        marginTop: 50,
+        marginBottom: 10
     }
 });
 export default MainMenu;
+
