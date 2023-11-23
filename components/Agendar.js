@@ -91,6 +91,10 @@ VALUES (?, ?, ?, ?, ?, ?)
         navigation.navigate('MainMenu');
     };
 
+    const handleVoltar = () => {
+        navigation.navigate('MainMenu')
+    }
+
     useEffect(() => {
         async function buscarDados() {
             db.transaction(
@@ -180,11 +184,13 @@ VALUES (?, ?, ?, ?, ?, ?)
                     </Picker>
                 </View>
 
-                <View>
-                    <TouchableOpacity
-                        style={styles.button}
-                    >
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity style={styles.button}>
                         <Text onPress={handleAgendar} style={styles.buttonText}>Agendar</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.buttonRed}>
+                        <Text onPress={handleVoltar} style={styles.buttonText}>Voltar</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -257,8 +263,24 @@ const styles = StyleSheet.create({
         textAlign: 'left',
         marginLeft: 76
     },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 30,
+        marginTop: 10,
+        alignItems: 'center', // Centraliza os elementos horizontalmente
+    },
     button: {
         backgroundColor: Style.color,
+        paddingVertical: 10,
+        borderRadius: 10,
+        marginBottom: 10,
+        marginTop: 50,
+        width: '30%',
+        alignSelf: 'center',
+    },
+    buttonRed: {
+        backgroundColor: 'red',
         paddingVertical: 10,
         borderRadius: 10,
         marginBottom: 10,

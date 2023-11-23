@@ -98,6 +98,7 @@ export default function ConnectBanco() {
 
       tx.executeSql(
         `CREATE TABLE IF NOT EXISTS Agendamento (
+          ID INTEGER PRIMARY KEY AUTOINCREMENT,
           Nome TEXT NOT NULL,
           Telefone TEXT NOT NULL,
           Data TEXT NOT NULL,

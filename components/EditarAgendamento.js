@@ -10,17 +10,18 @@ const db = SQLite.openDatabase('BancoLembraAi.db');
 
 
 
-const EditarAgendamento = ({ navigation }) => {
+const EditarAgendamento = () => {
     const route = useRoute();
     const { appointmentData } = route.params;
     const [ramo, setRamo] = useState('');
-    const [selectedService, setSelectedService] = useState(appointmentData.selectedService);
-    const [selectedStatus, setSelectedStatus] = useState(appointmentData.Status);
-    const [nomeCliente, setNomeCliente] = useState('');
-    const [telefoneCliente, setTelefoneCliente] = useState('');
-    const [data, setData] = useState('');
-    const [horario, setHorario] = useState('');
-    //const navigation = useNavigation();
+    const [idAgendamento, setIdAgendamento] = useState(appointmentData?.ID);
+    const [nomeCliente, setNomeCliente] = useState(appointmentData?.Nome || '');
+    const [telefoneCliente, setTelefoneCliente] = useState(appointmentData?.Telefone || '');
+    const [data, setData] = useState(appointmentData?.Data || '');
+    const [horario, setHorario] = useState(appointmentData?.Horario || '');
+    const [selectedService, setSelectedService] = useState(appointmentData?.Servicos || '');
+    const [selectedStatus, setSelectedStatus] = useState(appointmentData?.Status || '');
+    const navigation = useNavigation();
     const [serviceOptionss, setServiceOptionss] = useState([]);
     const [statusOptionss, setStatusOptionss] = useState([]);
     const [agendamentos, setAgendamentos] = useState([]);
@@ -28,29 +29,33 @@ const EditarAgendamento = ({ navigation }) => {
     console.log(appointmentData);
 
     const handleAgendar = () => {
-        if (!nomeCliente || !telefoneCliente || !data || !horario || !selectedService) {
+        if (!nomeCliente || !telefoneCliente || !data || !horario || !selectedService || !selectedStatus) {
             console.log('Por favor, preencha todos os campos.');
+            console.log("Dados att:" + nomeCliente, telefoneCliente, data, horario, selectedService, selectedStatus)
             return;
         }
 
         const sql = `
-                    INSERT INTO Agendamento (Nome, Telefone, Data, Horario)
-                    VALUES (?, ?, ?, ?)
-                    `;
+            UPDATE Agendamento
+            SET Nome = ?, Telefone = ?, Data = ?, Horario = ?, Servicos = ?, Status = ?
+            WHERE ID = ?
+        `;
 
-        const params = [nomeCliente, telefoneCliente, data, horario];
+        const params = [nomeCliente, telefoneCliente, data, horario, selectedService, selectedStatus, appointmentData.ID];
+
         db.transaction((tx) => {
             tx.executeSql(
                 sql,
                 params,
                 (_, result) => {
-                    console.log('Dado cadastrado com sucesso!', result);
+                    console.log('Dado atualizado com sucesso!', result);
                 },
                 (_, error) => {
-                    console.error('Erro ao cadastrar os dados!', error);
+                    console.error('Erro ao atualizar os dados!', error);
                 }
             );
         });
+
         navigation.navigate('MainMenu');
     };
 
@@ -90,6 +95,10 @@ const EditarAgendamento = ({ navigation }) => {
         buscarDados();
     }, []);
 
+    const handleVoltar = () => {
+        navigation.navigate('MainMenu')
+    }
+
 
 
     return (
@@ -100,7 +109,7 @@ const EditarAgendamento = ({ navigation }) => {
                     <TextInput
                         style={styles.input}
                         placeholder="Nome do cliente"
-                        value={appointmentData.Nome}
+                        value={nomeCliente}
                         onChangeText={(text) => setNomeCliente(text)} />
                 </View>
 
@@ -109,7 +118,7 @@ const EditarAgendamento = ({ navigation }) => {
                     <TextInput
                         style={styles.input}
                         placeholder="Telefone do cliente"
-                        value={appointmentData.Telefone}
+                        value={telefoneCliente}
                         onChangeText={(text) => setTelefoneCliente(text)} />
                 </View>
 
@@ -118,7 +127,7 @@ const EditarAgendamento = ({ navigation }) => {
                     <TextInput
                         style={styles.input}
                         placeholder="Data do agendamento"
-                        value={appointmentData.Data}
+                        value={data}
                         onChangeText={(text) => setData(text)} />
                 </View>
 
@@ -127,7 +136,7 @@ const EditarAgendamento = ({ navigation }) => {
                     <TextInput
                         style={styles.input}
                         placeholder="Horário do agendamento"
-                        value={appointmentData.Horario}
+                        value={horario}
                         onChangeText={(text) => setHorario(text)} />
                 </View>
 
@@ -135,7 +144,7 @@ const EditarAgendamento = ({ navigation }) => {
                 <View style={styles.pickerContainer}>
                     <Picker
                         style={styles.Picker}
-                        selectedValue={appointmentData.Servicos}
+                        selectedValue={selectedService}
                         onValueChange={(itemValue) => setSelectedService(itemValue)}
                     >
                         <Picker.Item label="Selecione um serviço" value="" />
@@ -158,11 +167,13 @@ const EditarAgendamento = ({ navigation }) => {
                     </Picker>
                 </View>
 
-                <View>
-                    <TouchableOpacity
-                        style={styles.button}
-                    >
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity style={styles.button}>
                         <Text onPress={handleAgendar} style={styles.buttonText}>Atualizar</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.buttonRed}>
+                        <Text onPress={handleVoltar} style={styles.buttonText}>Voltar</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -235,8 +246,24 @@ const styles = StyleSheet.create({
         textAlign: 'left',
         marginLeft: 76
     },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 30,
+        marginTop: 10,
+        alignItems: 'center', // Centraliza os elementos horizontalmente
+    },
     button: {
         backgroundColor: Style.color,
+        paddingVertical: 10,
+        borderRadius: 10,
+        marginBottom: 10,
+        marginTop: 50,
+        width: '30%',
+        alignSelf: 'center',
+    },
+    buttonRed: {
+        backgroundColor: 'red',
         paddingVertical: 10,
         borderRadius: 10,
         marginBottom: 10,

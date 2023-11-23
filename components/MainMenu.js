@@ -6,6 +6,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 const db = SQLite.openDatabase('BancoLembraAi.db');
 import * as Style from '../assets/styles';
 import { selectLogo } from '../utils/pega-imagem';
+import { format, parseISO } from 'date-fns';
 
 async function getEstabelecimentoLogo(id) {
     const db = SQLite.openDatabase('BancoLembraAi.db');
@@ -45,6 +46,8 @@ const MainMenu = () => {
     const [originalCnpj, setOriginalCnpj] = useState(cnpj);
     const [originalRamo, setOriginalRamo] = useState(ramo);
     const [agendamentos, setAgendamentos] = useState([]);
+    const today = new Date();
+    const todayString = format(today, 'dd/MM/yyyy');
 
     const handleEditName = () => {
         setNameEditing(true);
@@ -127,11 +130,11 @@ const MainMenu = () => {
     const fetchAgendamentos = () => {
         db.transaction((tx) => {
             tx.executeSql(
-                'SELECT Nome, Telefone, Data, Horario, Servicos, Status FROM Agendamento',
+                'SELECT ID, Nome, Telefone, Data, Horario, Servicos, Status FROM Agendamento',
                 [],
                 (_, { rows }) => {
                     const appointments = rows._array;
-                    const sortedAppointments = sortAppointmentsByTime(appointments);
+                    const sortedAppointments = sortAppointmentsByTimeAndStatus(appointments);
                     setAgendamentos(sortedAppointments);
                 },
                 (_, error) => {
@@ -151,7 +154,7 @@ const MainMenu = () => {
         // console.log("Hora atual: " + currentTime)
         // console.log("Hora agendada: " + appointmentTime)
         // Se o horário do agendamento for anterior ao horário atual, marque como "Atrasado"
-        if (appointmentTime < currentTime) {
+        if (appointmentTime < currentTime && status != 'Atrasado' && status != 'Cancelado' && status != 'Atendido') {
             return styles.rightSideYellow;
         }
 
@@ -168,17 +171,24 @@ const MainMenu = () => {
         }
     };
 
-    const sortAppointmentsByTime = (appointments) => {
+    const sortAppointmentsByTimeAndStatus = (appointments) => {
         // Converte o horário para um formato comparável (pode precisar de ajustes dependendo do formato real)
         const convertTimeToComparable = (time) => {
             const [hour, minute] = time.split(':').map(Number);
             return hour * 60 + minute;
         };
 
-        // Ordena os agendamentos com base no horário
+        // Ordena os agendamentos com base no horário e no status
         return appointments.sort((a, b) => {
             const timeA = convertTimeToComparable(a.Horario);
             const timeB = convertTimeToComparable(b.Horario);
+
+            // Se os status são diferentes, organize por status
+            if (a.Status !== b.Status) {
+                return a.Status === 'Atendido' ? 1 : -1;
+            }
+
+            // Se ambos têm o mesmo status, organize por horário
             return timeA - timeB;
         });
     };
@@ -233,25 +243,32 @@ const MainMenu = () => {
                         <Text style={styles.cardStatusText}>Aguardando</Text>
                     </View>
                 </View>
-                {agendamentos.map((appointment, index) => (
-                    <View key={index} style={styles.card}>
-                        <TouchableOpacity
-                            onPress={() => handleEditarAgendamento(appointment)}
-                            style={{ flexDirection: 'row' }}
-                        >
-                            <View style={{ flex: 1 }}>
-                                <View style={styles.cardHeader}>
-                                    <Text style={styles.cardHeaderText}>Nome: {appointment.Nome}</Text>
-                                </View>
-                                <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
-                                <Text style={styles.cardText}>Data: {appointment.Data}</Text>
-                                <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
-                                <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
+
+                {agendamentos.map((appointment, index) => {
+                    if (todayString === appointment.Data) {
+                        return (
+                            <View key={index} style={styles.card}>
+                                <TouchableOpacity
+                                    onPress={() => handleEditarAgendamento(appointment)}
+                                    style={{ flexDirection: 'row' }}
+                                >
+                                    <View style={{ flex: 1 }}>
+                                        <View style={styles.cardHeader}>
+                                            <Text style={styles.cardHeaderText}>Nome: {appointment.Nome}</Text>
+                                        </View>
+                                        <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
+                                        <Text style={styles.cardText}>Data: {appointment.Data}</Text>
+                                        <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
+                                        <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
+                                    </View>
+                                    <View style={getStatusStyle(appointment.Status, appointment.Horario)}></View>
+                                </TouchableOpacity>
                             </View>
-                            <View style={getStatusStyle(appointment.Status, appointment.Horario)}></View>
-                        </TouchableOpacity>
-                    </View>
-                ))}
+                        );
+                    }
+
+                    return null; // Ignorar agendamentos que não são do dia atual
+                })}
                 <View>
                     <Text style={styles.textCadastrado}>
                         <Text onPress={handleIr} style={styles.textCadastradoRed}>Voltar</Text>
@@ -308,7 +325,7 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 10,
         width: 20,  // Adjust the width as needed
     },
-    rightSidered: {
+    rightSideRed: {
         backgroundColor: 'red',
         borderTopRightRadius: 10,
         borderBottomRightRadius: 10,

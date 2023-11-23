@@ -8,6 +8,8 @@ import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import { convertImageToBase64 } from './BancoLembraAi';
 
+
+
 function CadastroInicial() {
     const [nomeEstabelecimento, setNomeEstabelecimento] = useState('');
     const [cnpj, setCnpj] = useState('');
@@ -220,6 +222,7 @@ function CadastroInicial() {
 
     return (
         <ScrollView style={styles.container}>
+            <ConnectBanco/>
             <View style={styles.formGroup}>
                 <Text style={styles.label}>Nome do Estabelecimento:</Text>
                 <TextInput
