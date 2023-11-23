@@ -102,7 +102,8 @@ export default function ConnectBanco() {
           Telefone TEXT NOT NULL,
           Data TEXT NOT NULL,
           Horario TEXT NOT NULL,
-          Servicos TEXT NOT NULL
+          Servicos TEXT NOT NULL,
+          Status TEXT NOT NULL
         );`,
         [],
         (_, result) => {

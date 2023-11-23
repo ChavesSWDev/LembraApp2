@@ -50,6 +50,7 @@ const Agendar = () => {
     const navigation = useNavigation();
     const [serviceOptionss, setServiceOptionss] = useState([]);
     const [agendamentos, setAgendamentos] = useState([]);
+    const [status, setStatus] = useState("Aguardando")
 
     const route = useRoute();
     const { appointment } = route.params;
@@ -68,13 +69,13 @@ const Agendar = () => {
             console.log('Por favor, preencha todos os campos.');
             return;
         }
-        
+
         const sql = `
-INSERT INTO Agendamento (Nome, Telefone, Data, Horario, Servicos)
-VALUES (?, ?, ?, ?, ?)
+INSERT INTO Agendamento (Nome, Telefone, Data, Horario, Servicos, Status)
+VALUES (?, ?, ?, ?, ?, ?)
 `;
 
-        const params = [nomeCliente, telefoneCliente, data, horario, selectedService];
+        const params = [nomeCliente, telefoneCliente, data, horario, selectedService, status];
         db.transaction((tx) => {
             tx.executeSql(
                 sql,

@@ -127,20 +127,61 @@ const MainMenu = () => {
     const fetchAgendamentos = () => {
         db.transaction((tx) => {
             tx.executeSql(
-                'SELECT Nome, Telefone, Data, Horario, Servicos FROM Agendamento',
+                'SELECT Nome, Telefone, Data, Horario, Servicos, Status FROM Agendamento',
                 [],
                 (_, { rows }) => {
                     const appointments = rows._array;
-                    setAgendamentos(appointments);
+                    const sortedAppointments = sortAppointmentsByTime(appointments);
+                    setAgendamentos(sortedAppointments);
                 },
                 (_, error) => {
                     console.error('Error fetching appointments:', error);
                 }
+
             );
         });
     };
 
+    const getStatusStyle = (status, horario) => {
+        const currentTime = new Date();
+        const [appointmentHour, appointmentMinute] = horario.split(':').map(Number);
 
+        // Configurando a hora do agendamento com a data atual
+        const appointmentTime = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), appointmentHour, appointmentMinute);
+        // console.log("Hora atual: " + currentTime)
+        // console.log("Hora agendada: " + appointmentTime)
+        // Se o horário do agendamento for anterior ao horário atual, marque como "Atrasado"
+        if (appointmentTime < currentTime) {
+            return styles.rightSideYellow;
+        }
+
+        // Lógica existente para outros casos
+        switch (status) {
+            case 'Aguardando':
+                return styles.rightSideBlue;
+            case 'Cancelado':
+                return styles.rightSideRed;
+            case 'Atendido':
+                return styles.rightSideGreen;
+            default:
+                return {}; // Pode adicionar um estilo padrão se nenhum dos casos acima corresponder
+        }
+    };
+
+    const sortAppointmentsByTime = (appointments) => {
+        // Converte o horário para um formato comparável (pode precisar de ajustes dependendo do formato real)
+        const convertTimeToComparable = (time) => {
+            const [hour, minute] = time.split(':').map(Number);
+            return hour * 60 + minute;
+        };
+
+        // Ordena os agendamentos com base no horário
+        return appointments.sort((a, b) => {
+            const timeA = convertTimeToComparable(a.Horario);
+            const timeB = convertTimeToComparable(b.Horario);
+            return timeA - timeB;
+        });
+    };
 
     useFocusEffect(
         React.useCallback(() => {
@@ -154,8 +195,7 @@ const MainMenu = () => {
         });
     }
 
-    const handleEditarAgendamento = (event, appointment) => {
-        event.preventDefault();
+    const handleEditarAgendamento = (appointment) => {
         navigation.navigate('EditarAgendamento', { appointmentData: appointment });
     }
 
@@ -190,71 +230,28 @@ const MainMenu = () => {
                     </View>
                     <View style={styles.cardStatus}>
                         <View style={styles.cardStatusCircleEspera}></View>
-                        <Text style={styles.cardStatusText}>Aberto</Text>
+                        <Text style={styles.cardStatusText}>Aguardando</Text>
                     </View>
                 </View>
-                {agendamentos.map((appointment, index) => {
-                    return (
-                        <View>
-                            <View style={styles.card} key={index}>
-                                <TouchableOpacity key={index} onPress={handleEditarAgendamento} style={{ flexDirection: 'row' }}>
-                                    <View style={{ flex: 1 }}>
-                                        <View style={styles.cardHeader}>
-                                            <Text style={styles.cardHeaderText}>Nome: {appointment.Nome}</Text>
-                                        </View>
-                                        <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
-                                        <Text style={styles.cardText}>Data: {appointment.Data}</Text>
-                                        <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
-                                        <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
-                                    </View>
-                                    <View style={styles.rightSideGreen}></View>
-                                </TouchableOpacity>
+                {agendamentos.map((appointment, index) => (
+                    <View key={index} style={styles.card}>
+                        <TouchableOpacity
+                            onPress={() => handleEditarAgendamento(appointment)}
+                            style={{ flexDirection: 'row' }}
+                        >
+                            <View style={{ flex: 1 }}>
+                                <View style={styles.cardHeader}>
+                                    <Text style={styles.cardHeaderText}>Nome: {appointment.Nome}</Text>
+                                </View>
+                                <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
+                                <Text style={styles.cardText}>Data: {appointment.Data}</Text>
+                                <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
+                                <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
                             </View>
-                            <View style={styles.card} key={index}>
-                                <TouchableOpacity key={index} onPress={handleEditarAgendamento} style={{ flexDirection: 'row' }}>
-                                    <View style={{ flex: 1 }}>
-                                        <View style={styles.cardHeader}>
-                                            <Text style={styles.cardHeaderText}>Nome: {appointment.Nome}</Text>
-                                        </View>
-                                        <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
-                                        <Text style={styles.cardText}>Data: {appointment.Data}</Text>
-                                        <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
-                                        <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
-                                    </View>
-                                    <View style={styles.rightSideyellow}></View>
-                                </TouchableOpacity>
-                            </View>
-                            <View style={styles.card} key={index}>
-                                <TouchableOpacity key={index} onPress={handleEditarAgendamento} style={{ flexDirection: 'row' }}>
-                                    <View style={{ flex: 1 }}>
-                                        <View style={styles.cardHeader}>
-                                            <Text style={styles.cardHeaderText}>Nome: {appointment.Nome}</Text>
-                                        </View>
-                                        <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
-                                        <Text style={styles.cardText}>Data: {appointment.Data}</Text>
-                                        <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
-                                        <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
-                                    </View>
-                                    <View style={styles.rightSidered}></View>
-                                </TouchableOpacity>
-                            </View>
-                            <View style={styles.card} key={index}>
-                                <TouchableOpacity key={index} onPress={handleEditarAgendamento} style={{ flexDirection: 'row' }}>
-                                    <View style={{ flex: 1 }}>
-                                        <View style={styles.cardHeader}>
-                                            <Text style={styles.cardHeaderText}>Nome: {appointment.Nome}</Text>
-                                        </View>
-                                        <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
-                                        <Text style={styles.cardText}>Data: {appointment.Data}</Text>
-                                        <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
-                                        <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
-                                    </View>
-                                    <View style={styles.rightSideBlue}></View>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    )
-                })}
+                            <View style={getStatusStyle(appointment.Status, appointment.Horario)}></View>
+                        </TouchableOpacity>
+                    </View>
+                ))}
                 <View>
                     <Text style={styles.textCadastrado}>
                         <Text onPress={handleIr} style={styles.textCadastradoRed}>Voltar</Text>
@@ -303,7 +300,7 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 10,
         width: 20,  // Adjust the width as needed
     },
-    rightSideyellow: {
+    rightSideYellow: {
         backgroundColor: 'yellow',
         borderTopRightRadius: 10,
         borderBottomRightRadius: 10,
@@ -364,7 +361,7 @@ const styles = StyleSheet.create({
         marginRight: 5,
     },
     cardStatusText: {
-        fontSize: 16,
+        fontSize: 14,
         textAlign: 'center',
         color: 'black',
         fontWeight: 'bold'

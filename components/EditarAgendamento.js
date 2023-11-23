@@ -10,21 +10,21 @@ const db = SQLite.openDatabase('BancoLembraAi.db');
 
 
 
-const EditarAgendamento = ({  navigation }) => {
-     const route = useRoute();
-console.log('asdasd' + route.params?.appointmentData);
-
+const EditarAgendamento = ({ navigation }) => {
+    const route = useRoute();
     const { appointmentData } = route.params;
     const [ramo, setRamo] = useState('');
-    const [selectedService, setSelectedService] = useState('');
+    const [selectedService, setSelectedService] = useState(appointmentData.selectedService);
+    const [selectedStatus, setSelectedStatus] = useState(appointmentData.Status);
     const [nomeCliente, setNomeCliente] = useState('');
     const [telefoneCliente, setTelefoneCliente] = useState('');
     const [data, setData] = useState('');
     const [horario, setHorario] = useState('');
     //const navigation = useNavigation();
     const [serviceOptionss, setServiceOptionss] = useState([]);
+    const [statusOptionss, setStatusOptionss] = useState([]);
     const [agendamentos, setAgendamentos] = useState([]);
-
+    const statusOptions = ['Aguardando', 'Atrasado', 'Atendido', 'Cancelado'];
     console.log(appointmentData);
 
     const handleAgendar = () => {
@@ -63,7 +63,7 @@ console.log('asdasd' + route.params?.appointmentData);
                         [],
                         (_, resultado) => {
                             // Processar os resultados aqui
-                            console.log('Dados recuperados com sucesso:', resultado);
+                            // console.log('Dados recuperados com sucesso:', resultado);
 
                             let options = [];
                             if (resultado.rows.length > 0) {
@@ -100,7 +100,7 @@ console.log('asdasd' + route.params?.appointmentData);
                     <TextInput
                         style={styles.input}
                         placeholder="Nome do cliente"
-                        value={nomeCliente}
+                        value={appointmentData.Nome}
                         onChangeText={(text) => setNomeCliente(text)} />
                 </View>
 
@@ -109,7 +109,7 @@ console.log('asdasd' + route.params?.appointmentData);
                     <TextInput
                         style={styles.input}
                         placeholder="Telefone do cliente"
-                        value={telefoneCliente}
+                        value={appointmentData.Telefone}
                         onChangeText={(text) => setTelefoneCliente(text)} />
                 </View>
 
@@ -118,7 +118,7 @@ console.log('asdasd' + route.params?.appointmentData);
                     <TextInput
                         style={styles.input}
                         placeholder="Data do agendamento"
-                        value={data}
+                        value={appointmentData.Data}
                         onChangeText={(text) => setData(text)} />
                 </View>
 
@@ -127,7 +127,7 @@ console.log('asdasd' + route.params?.appointmentData);
                     <TextInput
                         style={styles.input}
                         placeholder="Horário do agendamento"
-                        value={horario}
+                        value={appointmentData.Horario}
                         onChangeText={(text) => setHorario(text)} />
                 </View>
 
@@ -135,7 +135,7 @@ console.log('asdasd' + route.params?.appointmentData);
                 <View style={styles.pickerContainer}>
                     <Picker
                         style={styles.Picker}
-                        selectedValue={selectedService}
+                        selectedValue={appointmentData.Servicos}
                         onValueChange={(itemValue) => setSelectedService(itemValue)}
                     >
                         <Picker.Item label="Selecione um serviço" value="" />
@@ -145,11 +145,24 @@ console.log('asdasd' + route.params?.appointmentData);
                     </Picker>
                 </View>
 
+                <Text style={styles.label}>Status:</Text>
+                <View style={styles.pickerContainer}>
+                    <Picker
+                        style={styles.Picker}
+                        selectedValue={selectedStatus}
+                        onValueChange={(itemValue) => setSelectedStatus(itemValue)}
+                    >
+                        {statusOptions.map((status, index) => (
+                            <Picker.Item key={index} label={status} value={status} />
+                        ))}
+                    </Picker>
+                </View>
+
                 <View>
                     <TouchableOpacity
                         style={styles.button}
                     >
-                        <Text onPress={handleAgendar} style={styles.buttonText}>Agendar</Text>
+                        <Text onPress={handleAgendar} style={styles.buttonText}>Atualizar</Text>
                     </TouchableOpacity>
                 </View>
 
