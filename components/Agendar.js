@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import * as Style from '../assets/styles';
 import NavBar from './NavBar';
 import { Picker } from '@react-native-picker/picker';
@@ -70,26 +70,62 @@ const Agendar = () => {
             return;
         }
 
-        const sql = `
-INSERT INTO Agendamento (Nome, Telefone, Data, Horario, Servicos, Status)
-VALUES (?, ?, ?, ?, ?, ?)
-`;
+        // Verifica se já existe um agendamento para a mesma data e horário
+        const checkExistingSql = `
+            SELECT COUNT(*) as count
+            FROM Agendamento
+            WHERE Data = ? AND Horario = ?
+        `;
 
-        const params = [nomeCliente, telefoneCliente, data, horario, selectedService, status];
+        const checkExistingParams = [data, horario];
+
         db.transaction((tx) => {
             tx.executeSql(
-                sql,
-                params,
+                checkExistingSql,
+                checkExistingParams,
                 (_, result) => {
-                    console.log('Dado cadastrado com sucesso!', result);
+                    const count = result.rows.item(0).count;
+
+                    if (count > 0) {
+                        console.log('Já existe um agendamento para esta data e horário.');
+                        Alert.alert('Aviso', 'Já existe um agendamento para esta data e horário.');
+                    } else {
+                        // Se não houver agendamento, procede com a inserção
+                        const insertSql = `
+                            INSERT INTO Agendamento (Nome, Telefone, Data, Horario, Servicos, Status)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                        `;
+
+                        const insertParams = [nomeCliente, telefoneCliente, data, horario, selectedService, status];
+
+                        tx.executeSql(
+                            insertSql,
+                            insertParams,
+                            (_, result) => {
+                                console.log('Dado cadastrado com sucesso!', result);
+                            },
+                            (_, error) => {
+                                console.error('Erro ao cadastrar os dados!', error);
+                            }
+                        );
+
+                        navigation.navigate('MainMenu');
+                    }
                 },
                 (_, error) => {
-                    console.error('Erro ao cadastrar os dados!', error);
+                    console.error('Erro ao verificar agendamento existente!', error);
                 }
             );
         });
-        navigation.navigate('MainMenu');
     };
+
+    const handleLimpar = () => {
+        setNomeCliente('');
+        setTelefoneCliente('');
+        setData('');
+        setHorario('');
+        setSelectedService('Selecione um serviço')
+    }
 
     const handleVoltar = () => {
         navigation.navigate('MainMenu')
@@ -189,6 +225,10 @@ VALUES (?, ?, ?, ?, ?, ?)
                         <Text onPress={handleAgendar} style={styles.buttonText}>Agendar</Text>
                     </TouchableOpacity>
 
+                    <TouchableOpacity style={styles.buttonGray}>
+                        <Text onPress={handleLimpar} style={styles.buttonText}>Limpar</Text>
+                    </TouchableOpacity>
+
                     <TouchableOpacity style={styles.buttonRed}>
                         <Text onPress={handleVoltar} style={styles.buttonText}>Voltar</Text>
                     </TouchableOpacity>
@@ -281,6 +321,15 @@ const styles = StyleSheet.create({
     },
     buttonRed: {
         backgroundColor: 'red',
+        paddingVertical: 10,
+        borderRadius: 10,
+        marginBottom: 10,
+        marginTop: 50,
+        width: '30%',
+        alignSelf: 'center',
+    },
+    buttonGray: {
+        backgroundColor: 'gray',
         paddingVertical: 10,
         borderRadius: 10,
         marginBottom: 10,

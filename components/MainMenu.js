@@ -7,6 +7,7 @@ const db = SQLite.openDatabase('BancoLembraAi.db');
 import * as Style from '../assets/styles';
 import { selectLogo } from '../utils/pega-imagem';
 import { format, parseISO } from 'date-fns';
+import Icon from "react-native-vector-icons/FontAwesome"
 
 async function getEstabelecimentoLogo(id) {
     const db = SQLite.openDatabase('BancoLembraAi.db');
@@ -193,6 +194,39 @@ const MainMenu = () => {
         });
     };
 
+    const formatDate = (date) => {
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    };
+
+    const [currentDate, setCurrentDate] = useState(formatDate(new Date()));
+
+    const handleEsquerdaClick = async () => {
+        const currentDateObject = new Date(currentDate);
+        currentDateObject.setDate(currentDateObject.getDate() - 1);
+        const formattedDate = formatDate(currentDateObject);
+    
+        // Atualize o estado ou execute a lógica necessária para mostrar os agendamentos do dia anterior
+        setCurrentDate(formattedDate);
+        await fetchAgendamentos(formattedDate);
+        // Continue com outras lógicas, se necessário.
+    };
+    
+    const handleDireitaClick = async () => {
+        const currentDateObject = new Date(currentDate);
+        currentDateObject.setDate(currentDateObject.getDate() + 1);
+        const formattedDate = formatDate(currentDateObject);
+    
+        // Atualize o estado ou execute a lógica necessária para mostrar os agendamentos do próximo dia
+        setCurrentDate(formattedDate);
+        await fetchAgendamentos(formattedDate);
+        // Continue com outras lógicas, se necessário.
+    };
+
+
+
     useFocusEffect(
         React.useCallback(() => {
             fetchAgendamentos();
@@ -208,11 +242,12 @@ const MainMenu = () => {
     const handleEditarAgendamento = (appointment) => {
         navigation.navigate('EditarAgendamento', { appointmentData: appointment });
     }
-
     return (
         <ScrollView>
             <View style={styles.container}>
                 <ConnectBanco />
+
+                <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center' }} />
 
                 <View>
                     <TouchableOpacity
@@ -244,8 +279,42 @@ const MainMenu = () => {
                     </View>
                 </View>
 
+                <View style={styles.ladoAlado}>
+                    {/* Botão com ícone à esquerda */}
+                    <TouchableOpacity onPress={() => handleEsquerdaClick()}>
+                        <Icon name="arrow-left" size={30} color="black" />
+                    </TouchableOpacity>
+
+                    {/* Botão no meio com ícone de calendário */}
+                    <TouchableOpacity onPress={() => handleCalendarioClick()} style={{ marginLeft: 20, marginRight: 20 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Icon name="calendar" size={30} color="black" />
+                            <Text style={{ marginLeft: 10, fontSize: 20 }}>Calendário</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    {/* Botão com ícone à direita */}
+                    <TouchableOpacity onPress={() => handleDireitaClick()}>
+                        <Icon name="arrow-right" size={30} color="black" />
+                    </TouchableOpacity>
+                </View>
+
                 {agendamentos.map((appointment, index) => {
-                    if (todayString === appointment.Data) {
+                    const diaAtualAgendamento = appointment.Data;
+
+                    // Converta a data do agendamento para um objeto Date
+                    const dateAgendamento = new Date(
+                        parseInt(diaAtualAgendamento.split('/')[2], 10),
+                        parseInt(diaAtualAgendamento.split('/')[1], 10) - 1,
+                        parseInt(diaAtualAgendamento.split('/')[0], 10)
+                    );
+
+                    // Formate a data para o formato 'DD/MM/YYYY'
+                    const formattedDiaAtualAgendamento = formatDate(dateAgendamento);
+                    console.log("Data hoje:" + currentDate)
+                    // Verifique se a data do agendamento é igual à data atual
+                    if (formattedDiaAtualAgendamento === currentDate) {
+
                         return (
                             <View key={index} style={styles.card}>
                                 <TouchableOpacity
@@ -254,7 +323,7 @@ const MainMenu = () => {
                                 >
                                     <View style={{ flex: 1 }}>
                                         <View style={styles.cardHeader}>
-                                            <Text style={styles.cardHeaderText}>Nome: {appointment.Nome}</Text>
+                                            <Text style={styles.cardHeader}>Nome: {appointment.Nome}</Text>
                                         </View>
                                         <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
                                         <Text style={styles.cardText}>Data: {appointment.Data}</Text>
@@ -267,8 +336,10 @@ const MainMenu = () => {
                         );
                     }
 
-                    return null; // Ignorar agendamentos que não são do dia atual
+                    return null; // Ignorar agendamentos que não são da data atual
                 })}
+
+
                 <View>
                     <Text style={styles.textCadastrado}>
                         <Text onPress={handleIr} style={styles.textCadastradoRed}>Voltar</Text>
