@@ -8,6 +8,7 @@ import * as Style from '../assets/styles';
 import { selectLogo } from '../utils/pega-imagem';
 import { format, parseISO } from 'date-fns';
 import Icon from "react-native-vector-icons/FontAwesome"
+import { Picker } from '@react-native-picker/picker';
 
 async function getEstabelecimentoLogo(id) {
     const db = SQLite.openDatabase('BancoLembraAi.db');
@@ -146,31 +147,19 @@ const MainMenu = () => {
         });
     };
 
-    const getStatusStyle = (status, horario) => {
-        const currentTime = new Date();
-        const [appointmentHour, appointmentMinute] = horario.split(':').map(Number);
-
-        // Configurando a hora do agendamento com a data atual
-        const appointmentTime = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), appointmentHour, appointmentMinute);
-        // console.log("Hora atual: " + currentTime)
-        // console.log("Hora agendada: " + appointmentTime)
-        // Se o horário do agendamento for anterior ao horário atual, marque como "Atrasado"
-        if (appointmentTime < currentTime && status != 'Atrasado' && status != 'Cancelado' && status != 'Atendido') {
-            return styles.rightSideYellow;
-        }
-
-        // Lógica existente para outros casos
-        switch (status) {
-            case 'Aguardando':
-                return styles.rightSideBlue;
-            case 'Cancelado':
-                return styles.rightSideRed;
-            case 'Atendido':
-                return styles.rightSideGreen;
-            default:
-                return {}; // Pode adicionar um estilo padrão se nenhum dos casos acima corresponder
-        }
+    const formatDate = (date) => {
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
     };
+
+    const [currentDate, setCurrentDate] = useState(() => formatDate(new Date()));
+
+    const [dataHoje, setDataHoje] = useState(() => formatDate(new Date()));
+
+    const currentTime = new Date();
+
 
     const sortAppointmentsByTimeAndStatus = (appointments) => {
         // Converte o horário para um formato comparável (pode precisar de ajustes dependendo do formato real)
@@ -194,44 +183,86 @@ const MainMenu = () => {
         });
     };
 
-    const formatDate = (date) => {
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
-    };
+    const hasAppointmentsForCurrentDate = agendamentos.some(appointment => {
+        const diaAtualAgendamento = appointment.Data;
+        const dateAgendamento = new Date(
+            parseInt(diaAtualAgendamento.split('/')[2], 10),
+            parseInt(diaAtualAgendamento.split('/')[1], 10) - 1,
+            parseInt(diaAtualAgendamento.split('/')[0], 10)
+        );
+        const formattedDiaAtualAgendamento = formatDate(dateAgendamento);
 
-    const [currentDate, setCurrentDate] = useState(formatDate(new Date()));
+        return formattedDiaAtualAgendamento === currentDate;
+    });
 
     const handleEsquerdaClick = async () => {
-        const currentDateObject = new Date(currentDate);
+        const [day, month, year] = currentDate.split('/'); // Divida a string da data
+        const currentDateObject = new Date(year, month - 1, day); // Crie um novo objeto Date
+        console.log("Antes de decrementar:", currentDateObject);
         currentDateObject.setDate(currentDateObject.getDate() - 1);
+        console.log("Depois de decrementar:", currentDateObject);
         const formattedDate = formatDate(currentDateObject);
-    
-        // Atualize o estado ou execute a lógica necessária para mostrar os agendamentos do dia anterior
+        console.log("Formatted Date:", formattedDate);
         setCurrentDate(formattedDate);
         await fetchAgendamentos(formattedDate);
-        // Continue com outras lógicas, se necessário.
     };
-    
+
     const handleDireitaClick = async () => {
-        const currentDateObject = new Date(currentDate);
-        currentDateObject.setDate(currentDateObject.getDate() + 1);
+        const [day, month, year] = currentDate.split('/'); // Divida a string da data
+        const currentDateObject = new Date(year, month - 1, day); // Crie um novo objeto Date
+        console.log("Antes de incrementar:", currentDateObject);
+        currentDateObject.setDate(currentDateObject.getDate() + 1); // Adicione um dia
+        console.log("Depois de incrementar:", currentDateObject);
         const formattedDate = formatDate(currentDateObject);
-    
-        // Atualize o estado ou execute a lógica necessária para mostrar os agendamentos do próximo dia
+        console.log("Formatted Date (Direita):", formattedDate);
         setCurrentDate(formattedDate);
         await fetchAgendamentos(formattedDate);
-        // Continue com outras lógicas, se necessário.
+        console.log("dataHoje"+dataHoje)
     };
-
-
 
     useFocusEffect(
         React.useCallback(() => {
             fetchAgendamentos();
         }, [])
     );
+
+    const getStatusStyle = (status, horario) => {
+        const [appointmentHour, appointmentMinute] = horario.split(':').map(Number);
+
+        // Configurando a hora do agendamento com a data atual
+        const appointmentTime = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), appointmentHour, appointmentMinute);
+
+        // Se o horário do agendamento for anterior ao horário atual, marque como "Atrasado"
+        if (appointmentTime < currentTime && status === 'Aguardando') {
+            return styles.rightSideYellow; // Mantenha o estilo "Aguardando" se estiver no passado, mas o status ainda for "Aguardando"
+        }
+        
+        if (appointmentTime < currentTime && status !== 'Atrasado' && status !== 'Cancelado' && status !== 'Atendido') {
+            return styles.rightSideYellow; // Altere para "Atrasado" se estiver no passado e o status não for "Atrasado", "Cancelado" ou "Atendido"
+        } 
+        
+        if (appointmentTime >= currentTime && status === 'Atrasado') {
+            return styles.rightSideBlue; // Se a data do agendamento for após a data atual, defina como "Aguardando" para evitar que seja marcado como "Atrasado"
+        }
+
+        if (dataHoje < formatDate(currentTime) && status === 'Aguardando') {
+            return styles.rightSideBlue; // Mantenha o estilo "Aguardando" se estiver no passado, mas o status ainda for "Aguardando"
+        }
+
+        // Lógica existente para outros casos
+        switch (status) {
+            case 'Aguardando':
+                return styles.rightSideBlue;
+            case 'Cancelado':
+                return styles.rightSideRed;
+            case 'Atendido':
+                return styles.rightSideGreen;
+            case 'Atrasado':
+                return styles.rightSideYellow;
+            default:
+                return {}; // Pode adicionar um estilo padrão se nenhum dos casos acima corresponder
+        }
+    };
 
     const handleAgendar = () => {
         navigation.navigate('Agendar', {
@@ -242,13 +273,56 @@ const MainMenu = () => {
     const handleEditarAgendamento = (appointment) => {
         navigation.navigate('EditarAgendamento', { appointmentData: appointment });
     }
+
+
+
+    const [cardAberto, setCardAberto] = useState(false);
+    const [mesSelecionado, setMesSelecionado] = useState(null);
+    const [anoSelecionado, setAnoSelecionado] = useState(2000);
+    const handleCalendarioClick = async () => {
+        setCardAberto(true);
+    }
+
+    const fecharCard = () => {
+        setCardAberto(false);
+        setMesSelecionado(null);
+    }
+
+    const selecionarMes = (mes) => {
+        setMesSelecionado(mes);
+        console.log("Mês selecionado: " + mesSelecionado)
+    }
+
+    const handleAnoChange = (valor) => {
+        setAnoSelecionado(valor);
+        console.log("Ano selecionado: " + anoSelecionado)
+    }
+
+    const renderizarDiasDoMes = () => {
+        const diasDoMes = Array.from({ length: 31 }, (_, index) => index + 1);
+
+        // Dividir os dias em grupos de 10
+        const gruposDeDias = [];
+        while (diasDoMes.length > 0) {
+            gruposDeDias.push(diasDoMes.splice(0, Math.min(10, diasDoMes.length)));
+        }
+
+        return gruposDeDias.map((grupo, index) => (
+            <View key={index} style={styles.linhaDiasContainer}>
+                {grupo.map((dia) => (
+                    <TouchableOpacity key={dia} onPress={() => console.log(`Dia selecionado: ${dia}`)}>
+                        <Text style={styles.textoDias}>{dia}</Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        ));
+    }
+
     return (
         <ScrollView>
             <View style={styles.container}>
                 <ConnectBanco />
-
                 <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center' }} />
-
                 <View>
                     <TouchableOpacity
                         style={styles.button}
@@ -260,6 +334,7 @@ const MainMenu = () => {
                 <View>
                     <Text style={styles.TextoAzul}>Agendamentos Programados</Text>
                 </View>
+
                 <View style={styles.ladoAlado}>
                     <View style={styles.cardStatus}>
                         <View style={styles.cardStatusCircleAtendido}></View>
@@ -284,7 +359,6 @@ const MainMenu = () => {
                     <TouchableOpacity onPress={() => handleEsquerdaClick()}>
                         <Icon name="arrow-left" size={30} color="black" />
                     </TouchableOpacity>
-
                     {/* Botão no meio com ícone de calendário */}
                     <TouchableOpacity onPress={() => handleCalendarioClick()} style={{ marginLeft: 20, marginRight: 20 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -298,47 +372,88 @@ const MainMenu = () => {
                         <Icon name="arrow-right" size={30} color="black" />
                     </TouchableOpacity>
                 </View>
+                <View>
+                    {cardAberto && (
+                        <View style={styles.card}>
+                            <TouchableOpacity onPress={fecharCard}>
+                                <Text style={styles.fecharCard}>X</Text>
+                            </TouchableOpacity>
 
-                {agendamentos.map((appointment, index) => {
-                    const diaAtualAgendamento = appointment.Data;
+                            <Text style={styles.cardHeader}>Selecionar data</Text>
 
-                    // Converta a data do agendamento para um objeto Date
-                    const dateAgendamento = new Date(
-                        parseInt(diaAtualAgendamento.split('/')[2], 10),
-                        parseInt(diaAtualAgendamento.split('/')[1], 10) - 1,
-                        parseInt(diaAtualAgendamento.split('/')[0], 10)
-                    );
+                            {/* Picker para seleção de ano */}
+                            <Picker
+                                selectedValue={anoSelecionado}
+                                style={styles.pickerAno}
+                                onValueChange={(valor) => handleAnoChange(valor)}
+                            >
+                                {Array.from({ length: 101 }, (_, index) => 2000 + index).map((ano) => (
+                                    <Picker.Item key={ano} label={ano.toString()} value={ano} />
+                                ))}
+                            </Picker>
 
-                    // Formate a data para o formato 'DD/MM/YYYY'
-                    const formattedDiaAtualAgendamento = formatDate(dateAgendamento);
-                    console.log("Data hoje:" + currentDate)
-                    // Verifique se a data do agendamento é igual à data atual
-                    if (formattedDiaAtualAgendamento === currentDate) {
-
-                        return (
-                            <View key={index} style={styles.card}>
-                                <TouchableOpacity
-                                    onPress={() => handleEditarAgendamento(appointment)}
-                                    style={{ flexDirection: 'row' }}
-                                >
-                                    <View style={{ flex: 1 }}>
-                                        <View style={styles.cardHeader}>
-                                            <Text style={styles.cardHeader}>Nome: {appointment.Nome}</Text>
-                                        </View>
-                                        <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
-                                        <Text style={styles.cardText}>Data: {appointment.Data}</Text>
-                                        <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
-                                        <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
-                                    </View>
-                                    <View style={getStatusStyle(appointment.Status, appointment.Horario)}></View>
-                                </TouchableOpacity>
+                            {/* Renderizar meses */}
+                            <View style={styles.mesesContainer}>
+                                {['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'].map((mes) => (
+                                    <TouchableOpacity
+                                        key={mes}
+                                        style={styles.mes}
+                                        onPress={() => selecionarMes(mes)}
+                                    >
+                                        <Text style={styles.textoMeses}>{mes}</Text>
+                                    </TouchableOpacity>
+                                ))}
                             </View>
+
+                            {/* Renderizar dias do mês selecionado */}
+                            {mesSelecionado && (
+                                <View style={styles.diasContainer}>
+                                    {renderizarDiasDoMes()}
+                                </View>
+                            )}
+                        </View>
+                    )}
+                </View>
+                {hasAppointmentsForCurrentDate ? (
+                    agendamentos.map((appointment, index) => {
+                        const diaAtualAgendamento = appointment.Data;
+                        const dateAgendamento = new Date(
+                            parseInt(diaAtualAgendamento.split('/')[2], 10),
+                            parseInt(diaAtualAgendamento.split('/')[1], 10) - 1,
+                            parseInt(diaAtualAgendamento.split('/')[0], 10)
                         );
-                    }
+                        const formattedDiaAtualAgendamento = formatDate(dateAgendamento);
 
-                    return null; // Ignorar agendamentos que não são da data atual
-                })}
+                        if (formattedDiaAtualAgendamento === currentDate) {
+                            return (
+                                <View key={index} style={styles.card}>
+                                    <TouchableOpacity
+                                        onPress={() => handleEditarAgendamento(appointment)}
+                                        style={{ flexDirection: 'row' }}
+                                    >
+                                        <View style={{ flex: 1 }}>
+                                            <View style={styles.cardHeader}>
+                                                <Text style={styles.cardHeader}>Nome: {appointment.Nome}</Text>
+                                            </View>
+                                            <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
+                                            <Text style={styles.cardText}>Data: {appointment.Data}</Text>
+                                            <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
+                                            <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
+                                        </View>
+                                        <View style={getStatusStyle(appointment.Status, appointment.Horario)}></View>
+                                    </TouchableOpacity>
+                                </View>
+                            );
+                        }
 
+                        return null;
+                    })
+                ) : (
+                    <View style={styles.card}>
+                        <Text style={styles.cardHeader}>Data de hoje: {currentDate}</Text>
+                        <Text style={styles.cardText}>Desculpe, não há agendamentos previstos para essa data.</Text>
+                    </View>
+                )}
 
                 <View>
                     <Text style={styles.textCadastrado}>
@@ -356,6 +471,30 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: '#f0f0f0',
         marginTop: 50
+    },
+    mesesContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginTop: 10,
+        marginBottom: 10,
+    },
+    mes: {
+        fontWeight: 'bold'
+    },
+    diasContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 10,
+        marginBottom: 20,
+    },
+    linhaDiasContainer: {
+        justifyContent: 'space-around',
+        marginTop: 10,
+        fontWeight: 'bold'
+    },
+    fecharCard: {
+        color: 'red',
+        fontWeight: 'bold'
     },
     ladoAlado: {
         alignSelf: 'center',
@@ -520,7 +659,22 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 50,
         marginBottom: 10
-    }
+    },
+    textoMeses: {
+        color: Style.color,
+        fontSize: 14,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 10
+    },
+    textoDias: {
+        color: Style.color,
+        fontSize: 14,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginTop: 5,
+        marginBottom: 5
+    },
 });
 export default MainMenu;
 
