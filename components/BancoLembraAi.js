@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import * as SQLite from 'expo-sqlite';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const db = SQLite.openDatabase('BancoLembraAi.db');
 // db.transaction(
@@ -115,6 +116,8 @@ export default function ConnectBanco() {
         }
       );
     });
+
+    
   }, []);
 
   return (

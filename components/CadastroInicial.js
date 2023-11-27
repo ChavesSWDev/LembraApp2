@@ -129,10 +129,9 @@ function CadastroInicial() {
 
 
     async function handleCadastro() {
-        areInputsFilled
-
+        // Verifique se os campos obrigatórios estão preenchidos
         if (!areInputsFilled()) {
-            Alert.alert('Aviso', 'Por favor preencha os campos vazios para continuar o cadastro', [
+            Alert.alert('Aviso', 'Por favor, preencha os campos vazios para continuar o cadastro', [
                 {
                     text: 'Ok',
                     onPress: () => { },
@@ -143,44 +142,54 @@ function CadastroInicial() {
 
         try {
             // Verifica se a tabela Estabelecimento já tem algum registro
-            // const count = await new Promise((resolve, reject) => {
-            //     db.transaction((tx) => {
-            //         tx.executeSql('SELECT COUNT(*) AS total FROM Estabelecimento', [], (_, result) => {
-            //             console.log('Número de registros na tabela Estabelecimento:', result.rows.item(0).total);
-            //             resolve(result.rows.item(0).total);
-            //         }, (_, error) => {
-            //             console.error('Erro ao contar os registros na tabela Estabelecimento:', error);
-            //             reject(error);
-            //         });
-            //     });
-            // });
-
-            // // Se o número de
-            //                 navigation.navigate('MainMenu');
-            //             },
-            //         },
-            //     ]);
-            // } else {
-            // Se o número de registros for igual a zero, tenta inserir o novo registro
-            const sql = `INSERT INTO Estabelecimento (Nome, CNPJ, Ramo, Logotipo) VALUES (?, ?, ?, ?)`;
-            const params = [nomeEstabelecimento, cnpj, selectedService, base64Logotipo];
-
-
-            db.transaction(async (tx) => {
-                tx.executeSql(sql, params, (_, result) => {
-                    console.log('Dados cadastrados com sucesso:', result);
-                }, (_, error) => {
-                    console.error('Erro ao cadastrar os dados:', error);
+            const count = await new Promise((resolve, reject) => {
+                db.transaction((tx) => {
+                    tx.executeSql(
+                        'SELECT COUNT(*) AS total FROM Estabelecimento',
+                        [],
+                        (_, result) => {
+                            console.log('Número de registros na tabela Estabelecimento:', result.rows.item(0).total);
+                            resolve(result.rows.item(0).total);
+                        },
+                        (_, error) => {
+                            console.error('Erro ao contar os registros na tabela Estabelecimento:', error);
+                            reject(error);
+                        }
+                    );
                 });
             });
 
-            await insertServices();
-            navigation.navigate('MainMenu');
-            // }
+            // Se o número de registros for maior que zero, navegue para a página MainMenu
+            if (count > 0) {
+                Alert.alert("Já existe dados cadastrados, você será redirecionado ao Menu Principal.")
+                navigation.navigate('MainMenu');
+            } else {
+                // Se não houver registros, tenta inserir o novo registro
+                const sql = `INSERT INTO Estabelecimento (Nome, CNPJ, Ramo, Logotipo) VALUES (?, ?, ?, ?)`;
+                const params = [nomeEstabelecimento, cnpj, selectedService, base64Logotipo];
+
+                db.transaction(async (tx) => {
+                    tx.executeSql(
+                        sql,
+                        params,
+                        (_, result) => {
+                            console.log('Dados cadastrados com sucesso:', result);
+                        },
+                        (_, error) => {
+                            console.error('Erro ao cadastrar os dados:', error);
+                        }
+                    );
+                });
+
+                // Insere os serviços
+                await insertServices();
+
+                // Navega para a página MainMenu
+                navigation.navigate('MainMenu');
+            }
         } catch (error) {
             console.error('Erro ao cadastrar os dados', error);
         }
-
     }
 
     const ImageBase64 = ({ base64String }) => {
@@ -222,7 +231,7 @@ function CadastroInicial() {
 
     return (
         <ScrollView style={styles.container}>
-            <ConnectBanco/>
+            <ConnectBanco />
             <View style={styles.formGroup}>
                 <Text style={styles.label}>Nome do Estabelecimento:</Text>
                 <TextInput

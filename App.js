@@ -15,6 +15,7 @@ import MainMenu from './components/MainMenu';
 import Agendar from './components/Agendar';
 import EditarAgendamento from './components/EditarAgendamento';
 import MeuPerfil from './components/MeuPerfil';
+import Opcoes from './components/Opcoes';
 import Form from './components/form';
 
 
@@ -113,6 +114,9 @@ export default function App() {
           {props => <MeuPerfil/>}
         </Stack.Screen>
 
+        <Stack.Screen name="Opcoes">
+          {props => <Opcoes/>}
+        </Stack.Screen>
 
       </Stack.Navigator>
     </NavigationContainer>

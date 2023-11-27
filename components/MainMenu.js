@@ -217,7 +217,7 @@ const MainMenu = () => {
         console.log("Formatted Date (Direita):", formattedDate);
         setCurrentDate(formattedDate);
         await fetchAgendamentos(formattedDate);
-        console.log("dataHoje"+dataHoje)
+        console.log("dataHoje" + dataHoje)
     };
 
     useFocusEffect(
@@ -233,19 +233,19 @@ const MainMenu = () => {
         const appointmentTime = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), appointmentHour, appointmentMinute);
 
         // Se o horário do agendamento for anterior ao horário atual, marque como "Atrasado"
-        if (appointmentTime < currentTime && status === 'Aguardando') {
+        if (appointmentTime > currentTime && status === 'Aguardando') {
             return styles.rightSideYellow; // Mantenha o estilo "Aguardando" se estiver no passado, mas o status ainda for "Aguardando"
         }
-        
+
         if (appointmentTime < currentTime && status !== 'Atrasado' && status !== 'Cancelado' && status !== 'Atendido') {
             return styles.rightSideYellow; // Altere para "Atrasado" se estiver no passado e o status não for "Atrasado", "Cancelado" ou "Atendido"
-        } 
-        
+        }
+
         if (appointmentTime >= currentTime && status === 'Atrasado') {
             return styles.rightSideBlue; // Se a data do agendamento for após a data atual, defina como "Aguardando" para evitar que seja marcado como "Atrasado"
         }
 
-        if (dataHoje < formatDate(currentTime) && status === 'Aguardando') {
+        if (appointmentTime < currentTime && status === 'Aguardando') {
             return styles.rightSideBlue; // Mantenha o estilo "Aguardando" se estiver no passado, mas o status ainda for "Aguardando"
         }
 
@@ -268,6 +268,10 @@ const MainMenu = () => {
         navigation.navigate('Agendar', {
             // estabelecimentoId: 
         });
+    }
+
+    const handleOpcoes = () => {
+        navigation.navigate('Opcoes')
     }
 
     const handleEditarAgendamento = (appointment) => {
@@ -330,6 +334,9 @@ const MainMenu = () => {
                         <Text onPress={handleAgendar} style={styles.buttonText}>Realizar agendamento</Text>
                     </TouchableOpacity>
                 </View>
+                <TouchableOpacity style={styles.buttonGray}>
+                    <Text onPress={handleOpcoes} style={styles.buttonText}>Opções</Text>
+                </TouchableOpacity>
 
                 <View>
                     <Text style={styles.TextoAzul}>Agendamentos Programados</Text>
@@ -450,8 +457,8 @@ const MainMenu = () => {
                     })
                 ) : (
                     <View style={styles.card}>
-                        <Text style={styles.cardHeader}>Data de hoje: {currentDate}</Text>
-                        <Text style={styles.cardText}>Desculpe, não há agendamentos previstos para essa data.</Text>
+                        <Text style={styles.cardHeader}>Dados recuperados: {currentDate}</Text>
+                        <Text style={styles.cardText}>Desculpe, não há dados para essa data.</Text>
                     </View>
                 )}
 
@@ -645,6 +652,15 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
         marginBottom: 10,
         marginTop: 50
+    },
+    buttonGray: {
+        backgroundColor: 'gray',
+        paddingVertical: 10,
+        borderRadius: 10,
+        marginBottom: 10,
+        marginTop: 50,
+        width: '30%',
+        alignSelf: 'center',
     },
     buttonText: {
         color: 'white',

@@ -5,7 +5,8 @@ import NavBar from './NavBar';
 import { Picker } from '@react-native-picker/picker';
 import * as SQLite from 'expo-sqlite';
 import { useNavigation, useRoute } from '@react-navigation/native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Clipboard from 'react-native-clipboard';
 const db = SQLite.openDatabase('BancoLembraAi.db');
 
 
@@ -21,6 +22,7 @@ const EditarAgendamento = () => {
     const [horario, setHorario] = useState(appointmentData?.Horario || '');
     const [selectedService, setSelectedService] = useState(appointmentData?.Servicos || '');
     const [selectedStatus, setSelectedStatus] = useState(appointmentData?.Status || '');
+    const [dadosCopiados, setDadosCopiados] = useState('');
     const navigation = useNavigation();
     const [serviceOptionss, setServiceOptionss] = useState([]);
     const [statusOptionss, setStatusOptionss] = useState([]);
@@ -99,6 +101,36 @@ const EditarAgendamento = () => {
         navigation.navigate('MainMenu')
     }
 
+    const handleCopiar = async () => {
+        const dadosString =
+            "Dados do agendamento de " +
+            nomeCliente +
+            "\nTelefone: " +
+            telefoneCliente +
+            "\nData: " +
+            data +
+            "\nHorário: " +
+            horario +
+            "\nServiços: " +
+            selectedService +
+            "\nStatus: " +
+            selectedStatus;
+
+        setDadosCopiados(dadosString);
+        console.log(dadosString); // Exibe os dados copiados no console
+
+        try {
+            // Define o conteúdo da área de transferência
+            await Clipboard.setString(dadosString);
+
+            // Exibe os dados copiados no console
+            console.log(dadosString);
+        } catch (error) {
+            console.error('Erro ao definir a área de transferência:', error);
+        }
+
+    };
+
 
 
     return (
@@ -170,6 +202,10 @@ const EditarAgendamento = () => {
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity style={styles.button}>
                         <Text onPress={handleAgendar} style={styles.buttonText}>Atualizar</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.buttonGray}>
+                        <Text onPress={handleCopiar} style={styles.buttonText}>Copiar dados</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.buttonRed}>
@@ -264,6 +300,15 @@ const styles = StyleSheet.create({
     },
     buttonRed: {
         backgroundColor: 'red',
+        paddingVertical: 10,
+        borderRadius: 10,
+        marginBottom: 10,
+        marginTop: 50,
+        width: '30%',
+        alignSelf: 'center',
+    },
+    buttonGray: {
+        backgroundColor: 'gray',
         paddingVertical: 10,
         borderRadius: 10,
         marginBottom: 10,
