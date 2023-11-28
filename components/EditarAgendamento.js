@@ -6,8 +6,11 @@ import { Picker } from '@react-native-picker/picker';
 import * as SQLite from 'expo-sqlite';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Clipboard from 'react-native-clipboard';
+import { Clipboard } from 'react-native';
+
+
 const db = SQLite.openDatabase('BancoLembraAi.db');
+
 
 
 
@@ -116,19 +119,15 @@ const EditarAgendamento = () => {
             "\nStatus: " +
             selectedStatus;
 
-        setDadosCopiados(dadosString);
-        console.log(dadosString); // Exibe os dados copiados no console
-
-        try {
-            // Define o conteúdo da área de transferência
-            await Clipboard.setString(dadosString);
-
-            // Exibe os dados copiados no console
-            console.log(dadosString);
-        } catch (error) {
-            console.error('Erro ao definir a área de transferência:', error);
-        }
-
+        Clipboard.setString(dadosString)
+            .then(() => {
+                console.log('Dados copiados:', dadosString);
+                ToastAndroid.show('Dados copiados para a área de transferência!', ToastAndroid.SHORT);
+            })
+            .catch((error) => {
+                console.error('Erro ao definir a área de transferência:', error);
+                ToastAndroid.show('Erro ao copiar dados!', ToastAndroid.SHORT);
+            });
     };
 
 
@@ -204,8 +203,8 @@ const EditarAgendamento = () => {
                         <Text onPress={handleAgendar} style={styles.buttonText}>Atualizar</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.buttonGray}>
-                        <Text onPress={handleCopiar} style={styles.buttonText}>Copiar dados</Text>
+                    <TouchableOpacity style={styles.buttonGray} onPress={handleCopiar}>
+                        <Text style={styles.buttonText}>Copiar dados</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.buttonRed}>

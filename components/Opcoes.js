@@ -370,6 +370,12 @@ const Opcoes = () => {
                         // Verifique os dados antes da inserção
                         console.log(`Dados a serem inseridos na tabela ${tableName}:`, data);
 
+                        if(tableName === "Agendamento") {
+                            tx.executeSql(`DELETE FROM ${tableName}`, [], (_, deleteResult) => {
+                                console.log(`Exclusão bem-sucedida na tabela ${tableName}: ${deleteResult.rowsAffected} linhas afetadas`);
+                            })
+                        }
+
                         // Itera sobre os novos dados
                         await Promise.all(
                             data.map(async (row) =>
