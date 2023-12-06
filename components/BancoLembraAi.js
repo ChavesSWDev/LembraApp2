@@ -115,6 +115,20 @@ export default function ConnectBanco() {
           console.error('Erro ao criar a tabela Agendamento.', error);
         }
       );
+
+      tx.executeSql(
+        `CREATE TABLE IF NOT EXISTS Colaboradores (
+          ID INTEGER PRIMARY KEY AUTOINCREMENT,
+          Nome TEXT NOT NULL
+        );`,
+        [],
+        (_, result) => {
+          console.log('Tabela Colaboradores criada.');
+        },
+        (_, error) => {
+          console.error('Erro ao criar a tabela Colaboradores.', error);
+        }
+      );
     });
 
     

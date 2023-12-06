@@ -7,10 +7,9 @@ const db = SQLite.openDatabase('BancoLembraAi.db');
 import * as Style from '../assets/styles';
 import { selectLogo } from '../utils/pega-imagem';
 import { format, parseISO } from 'date-fns';
-import Icon from "react-native-vector-icons/FontAwesome"
 import { Picker } from '@react-native-picker/picker';
 import * as FileSystem from 'expo-file-system';
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import NavBar from './NavBar';
 
 
 async function getEstabelecimentoLogo(id) {
@@ -262,316 +261,90 @@ const Opcoes = () => {
         setAgendamentosFiltrados(filteredAppointments);
     };
 
-    const resetarDados = () => {
-        db.transaction(
-            (tx) => {
-                // Execute DROP TABLE para remover completamente as tabelas
-                tx.executeSql('DROP TABLE IF EXISTS Estabelecimento');
-                tx.executeSql('DROP TABLE IF EXISTS Servico');
-                tx.executeSql('DROP TABLE IF EXISTS Agendamento');
-
-                // Em seguida, recrie as tabelas
-                tx.executeSql(
-                    'CREATE TABLE IF NOT EXISTS Estabelecimento (ID INTEGER PRIMARY KEY AUTOINCREMENT, Nome TEXT, CNPJ INTEGER, Ramo TEXT, Logotipo TEXT)'
-                );
-                tx.executeSql(
-                    'CREATE TABLE IF NOT EXISTS Servico (ID INTEGER PRIMARY KEY AUTOINCREMENT, Nome TEXT, Ramo TEXT, EstabelecimentoID INTEGER)'
-                );
-                tx.executeSql(
-                    'CREATE TABLE IF NOT EXISTS Agendamento (ID INTEGER PRIMARY KEY AUTOINCREMENT, Nome TEXT, Telefone TEXT, Data TEXT, Horario TEXT, Servicos TEXT, Status TEXT)'
-                );
-            },
-            (erro) => {
-                console.error('Erro na transação', erro);
-            }
-        );
-    };
-
-    const handleResetar = () => {
-        Alert.alert(
-            'Confirmar Resetar',
-            'Ao confirmar essa ação, todos os seus dados cadastrados até hoje, incluindo sua empresa, logotipo, agendamentos, serão EXCLUÍDOS PERMANENTEMENTE e você terá de recriar uma nova empresa do 0.',
-            [
-                {
-                    text: 'Cancelar',
-                    style: 'cancel',
-                },
-                {
-                    text: 'Resetar',
-                    onPress: () => {
-                        resetarDados();
-                        // Navegue para a página CadastroInicial após a redefinição
-                        navigation.navigate('CadastroInicial');
-                    },
-                    style: 'destructive',
-                },
-            ],
-            { cancelable: false }
-        );
-    };
-
-    const saveDataToFile = async (fileName, data) => {
-        try {
-            const backupJson = JSON.stringify(data, null, 2);
-            const filePath = `${FileSystem.documentDirectory}${fileName}`;
-            await FileSystem.writeAsStringAsync(filePath, backupJson, { encoding: FileSystem.EncodingType.UTF8 });
-
-            console.log(`Dados salvos com sucesso em: ${filePath}`);
-        } catch (error) {
-            console.error(`Erro ao salvar dados em ${fileName}:`, error);
-        }
-    };
-
-
-    const handleBackup = async () => {
-        try {
-            const backupData = {};
-
-            // Execute as consultas SQL para obter os dados das tabelas
-            const estabelecimentoQuery = await new Promise((resolve) =>
-                db.transaction((tx) => {
-                    tx.executeSql('SELECT * FROM Estabelecimento', [], (_, { rows }) => resolve(rows._array));
-                })
-            );
-
-            const servicoQuery = await new Promise((resolve) =>
-                db.transaction((tx) => {
-                    tx.executeSql('SELECT * FROM Servico', [], (_, { rows }) => resolve(rows._array));
-                })
-            );
-
-            const agendamentoQuery = await new Promise((resolve) =>
-                db.transaction((tx) => {
-                    tx.executeSql('SELECT * FROM Agendamento', [], (_, { rows }) => resolve(rows._array));
-                })
-            );
-
-            backupData.Estabelecimento = estabelecimentoQuery;
-            backupData.Servico = servicoQuery;
-            backupData.Agendamento = agendamentoQuery;
-
-            // Adicione logs para verificar os dados antes de criar o backup
-            console.log('Conteúdo dos dados antes do backup:', backupData);
-
-            // Salve os dados no sistema de arquivos do dispositivo
-            saveDataToFile('BancoLembraAiBackup.json', backupData);
-
-            console.log('Backup criado com sucesso.');
-        } catch (error) {
-            console.error('Erro ao criar backup:', error);
-        }
-    };
-
-    const insertData = async (tableName, data) => {
-        try {
-            return await new Promise(async (resolve, reject) => {
-                await db.transaction(
-                    async (tx) => {
-                        // Verifique os dados antes da inserção
-                        console.log(`Dados a serem inseridos na tabela ${tableName}:`, data);
-
-                        if(tableName === "Agendamento") {
-                            tx.executeSql(`DELETE FROM ${tableName}`, [], (_, deleteResult) => {
-                                console.log(`Exclusão bem-sucedida na tabela ${tableName}: ${deleteResult.rowsAffected} linhas afetadas`);
-                            })
-                        }
-
-                        // Itera sobre os novos dados
-                        await Promise.all(
-                            data.map(async (row) =>
-                                new Promise((resolve) => {
-                                    // Verifica se já existe um registro com o mesmo ID
-                                    tx.executeSql(
-                                        `SELECT * FROM ${tableName} WHERE ID = ?`,
-                                        [row.ID],
-                                        (_, result) => {
-                                            if (result.rows.length > 0) {
-                                                // Se existir, atualiza os dados
-                                                tx.executeSql(
-                                                    `UPDATE ${tableName} SET ${Object.keys(row)
-                                                        .map((key) => `${key} = ?`)
-                                                        .join(', ')} WHERE ID = ?`,
-                                                    [...Object.values(row), row.ID],
-                                                    (_, updateResult) => {
-                                                        console.log(`Atualização bem-sucedida na tabela ${tableName}: ${updateResult.rowsAffected} linhas afetadas`);
-                                                        resolve(updateResult);
-                                                    }
-                                                );
-                                            } else {
-                                                // Se não existir, insere um novo registro
-                                                tx.executeSql(
-                                                    `INSERT INTO ${tableName} (${Object.keys(row).join(', ')}) VALUES (${Object.values(row)
-                                                        .map(() => '?')
-                                                        .join(', ')})`,
-                                                    Object.values(row),
-                                                    (_, insertResult) => {
-                                                        console.log(`Inserção bem-sucedida na tabela ${tableName}: ${insertResult.rowsAffected} linhas afetadas`);
-                                                        resolve(insertResult);
-                                                    }
-                                                );
-                                            }
-                                        }
-                                    );
-                                })
-                            )
-                        );
-
-                        resolve('Inserção bem-sucedida');
-                    },
-                    (error) => {
-                        console.error(`Erro na transação: ${error}`);
-                        reject(`Erro na transação: ${error}`);
-                    }
-                );
-            });
-        } catch (error) {
-            console.error(`Erro durante a inserção em ${tableName}:`, error);
-            throw error;
-        }
-    };
-
-    const restoreBackup = () => {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const fileName = 'BancoLembraAiBackup.json';
-                const filePath = `${FileSystem.documentDirectory}${fileName}`;
-
-                // Lê os dados do arquivo de backup usando o Expo FileSystem
-                const backupJson = await FileSystem.readAsStringAsync(filePath, { encoding: FileSystem.EncodingType.UTF8 });
-
-                // Adicione um log para verificar o conteúdo do backup durante a restauração
-                console.log('Conteúdo do backup durante a restauração:', backupJson);
-
-                // Converte o JSON de backup de volta para objetos
-                const backupData = JSON.parse(backupJson);
-
-                // Verifica se os dados de Estabelecimento não são nulos antes de inseri-los no banco de dados
-                if (backupData.Estabelecimento !== null) {
-                    console.log('Substituindo Estabelecimento:', backupData.Estabelecimento);
-                    await insertData('Estabelecimento', backupData.Estabelecimento);
-                }
-
-                // Verifica se os dados de Servico não são nulos antes de inseri-los no banco de dados
-                if (backupData.Servico !== null) {
-                    console.log('Substituindo Servico:', backupData.Servico);
-                    await insertData('Servico', backupData.Servico);
-                }
-
-                // Verifica se os dados de Agendamento não são nulos antes de inseri-los no banco de dados
-                if (backupData.Agendamento !== null) {
-                    console.log('Substituindo Agendamento:', backupData.Agendamento);
-                    await insertData('Agendamento', backupData.Agendamento);
-                }
-
-                console.log('Restauração concluída com sucesso.');
-                resolve();
-            } catch (error) {
-                console.error('Erro ao restaurar backup:', error);
-                reject(error);
-            }
-        });
-    };
-
     return (
-        <ScrollView>
-            <View style={styles.container}>
-                <ConnectBanco />
-                <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center' }} />
-                <TouchableOpacity style={styles.buttonGray}>
-                    <Text onPress={handleOpcoes} style={styles.buttonText}>Voltar</Text>
-                </TouchableOpacity>
+        <>
+            <NavBar />
+            <ScrollView>
+                <View style={styles.container}>
+                    <ConnectBanco />
+                    <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center' }} />
+                    <TouchableOpacity style={styles.buttonGray}>
+                        <Text onPress={handleOpcoes} style={styles.buttonText}>Voltar</Text>
+                    </TouchableOpacity>
 
-                <Text style={styles.TextoAzul}>Agendamentos concluídos</Text>
+                    <Text style={styles.TextoAzul}>Agendamentos concluídos</Text>
 
-                <View style={styles.filtroContainer}>
-                    <View style={styles.filtroItem}>
-                        <Text style={styles.TextoAzul}>Ano</Text>
-                        {/* Picker para o Ano */}
-                        <Picker
-                            selectedValue={selectedYear}
-                            style={styles.picker}
-                            onValueChange={(itemValue) => setSelectedYear(itemValue)}
-                        >
-                            {years.map(year => (
-                                <Picker.Item style={styles.pickerText} key={year} label={year.toString()} value={year} />
-                            ))}
-                        </Picker>
-                    </View>
-
-                    <View style={styles.filtroItem}>
-                        {/* Texto para o Mês */}
-                        <Text style={styles.TextoAzul}>Mês</Text>
-                        {/* Picker para o Mês */}
-                        <Picker
-                            selectedValue={selectedMonth}
-                            style={styles.picker}
-                            onValueChange={(itemValue) => setSelectedMonth(itemValue)}
-                        >
-                            {months.map((month, index) => (
-                                <Picker.Item style={styles.pickerText} key={month} label={monthNames[index]} value={month} />
-                            ))}
-                        </Picker>
-                    </View>
-
-                    <View style={styles.filtroItem}>
-                        {/* Botão de Pesquisa */}
-                        <TouchableOpacity
-                            style={styles.button}
-                            title="Pesquisar"
-                            onPress={() => handlePesquisar(selectedYear, selectedMonth)}
-                        >
-                            <Text style={styles.buttonText}>Pesquisar</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                {pesquisaRealizada && agendamentosFiltrados.length === 0 ? (
-                    <View style={styles.card}>
-                        <Text style={styles.cardHeader}>Dados de: {selectedMonth}/{selectedYear}</Text>
-                        <Text style={styles.cardText}>Desculpe, não há dados para essa data.</Text>
-                    </View>
-                ) : (
-                    agendamentosFiltrados.map((appointment, index) => (
-                        <View key={index} style={styles.card}>
-                            <TouchableOpacity
-                                onPress={() => handleEditarAgendamento(appointment)}
-                                style={{ flexDirection: 'row' }}
+                    <View style={styles.filtroContainer}>
+                        <View style={styles.filtroItem}>
+                            <Text style={styles.TextoAzul}>Ano</Text>
+                            {/* Picker para o Ano */}
+                            <Picker
+                                selectedValue={selectedYear}
+                                style={styles.picker}
+                                onValueChange={(itemValue) => setSelectedYear(itemValue)}
                             >
-                                <View style={{ flex: 1 }}>
-                                    <View style={styles.cardHeader}>
-                                        <Text style={styles.cardHeader}>Nome: {appointment.Nome}</Text>
-                                    </View>
-                                    <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
-                                    <Text style={styles.cardText}>Data: {appointment.Data}</Text>
-                                    <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
-                                    <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
-                                </View>
-                                <View style={getStatusStyle(appointment.Status, appointment.Horario)}></View>
+                                {years.map(year => (
+                                    <Picker.Item style={styles.pickerText} key={year} label={year.toString()} value={year} />
+                                ))}
+                            </Picker>
+                        </View>
+
+                        <View style={styles.filtroItem}>
+                            {/* Texto para o Mês */}
+                            <Text style={styles.TextoAzul}>Mês</Text>
+                            {/* Picker para o Mês */}
+                            <Picker
+                                selectedValue={selectedMonth}
+                                style={styles.picker}
+                                onValueChange={(itemValue) => setSelectedMonth(itemValue)}
+                            >
+                                {months.map((month, index) => (
+                                    <Picker.Item style={styles.pickerText} key={month} label={monthNames[index]} value={month} />
+                                ))}
+                            </Picker>
+                        </View>
+
+                        <View style={styles.filtroItem}>
+                            {/* Botão de Pesquisa */}
+                            <TouchableOpacity
+                                style={styles.button}
+                                title="Pesquisar"
+                                onPress={() => handlePesquisar(selectedYear, selectedMonth)}
+                            >
+                                <Text style={styles.buttonText}>Pesquisar</Text>
                             </TouchableOpacity>
                         </View>
-                    ))
-                )}
-
-                <View style={styles.container}>
-                    <Text style={styles.TextoAzul}>Resetar todos os dados</Text>
-                    <TouchableOpacity style={styles.buttonRed}>
-                        <Text onPress={handleResetar} style={styles.buttonText}>Resetar</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={styles.container}>
-                    <Text style={styles.TextoAzul}>Realizar Backup</Text>
-                    <View style={styles.buttonContainer}>
-                        <TouchableOpacity style={styles.buttonGreen}>
-                            <Text onPress={handleBackup} style={styles.buttonText}>Backup</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.buttonGreen}>
-                            <Text onPress={restoreBackup} style={styles.buttonText}>Restaurar Backup</Text>
-                        </TouchableOpacity>
                     </View>
+
+                    {pesquisaRealizada && agendamentosFiltrados.length === 0 ? (
+                        <View style={styles.card}>
+                            <Text style={styles.cardHeader}>Dados de: {selectedMonth}/{selectedYear}</Text>
+                            <Text style={styles.cardText}>Desculpe, não há dados para essa data.</Text>
+                        </View>
+                    ) : (
+                        agendamentosFiltrados.map((appointment, index) => (
+                            <View key={index} style={styles.card}>
+                                <TouchableOpacity
+                                    onPress={() => handleEditarAgendamento(appointment)}
+                                    style={{ flexDirection: 'row' }}
+                                >
+                                    <View style={{ flex: 1 }}>
+                                        <View style={styles.cardHeader}>
+                                            <Text style={styles.cardHeader}>Nome: {appointment.Nome}</Text>
+                                        </View>
+                                        <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
+                                        <Text style={styles.cardText}>Data: {appointment.Data}</Text>
+                                        <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
+                                        <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
+                                    </View>
+                                    <View style={getStatusStyle(appointment.Status, appointment.Horario)}></View>
+                                </TouchableOpacity>
+                            </View>
+                        ))
+                    )}
                 </View>
-            </View>
-        </ScrollView>
+            </ScrollView>
+        </>
     );
 };
 
@@ -580,7 +353,8 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         backgroundColor: '#f0f0f0',
-        marginTop: 50
+        marginTop: 50,
+        marginBottom: 50
     },
     picker: {
         backgroundColor: Style.color,

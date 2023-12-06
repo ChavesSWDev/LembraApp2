@@ -6,6 +6,7 @@ import { Picker } from '@react-native-picker/picker';
 import * as SQLite from 'expo-sqlite';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
+
 const db = SQLite.openDatabase('BancoLembraAi.db');
 
 
@@ -168,74 +169,77 @@ const Agendar = () => {
     }, []);
 
     return (
-        <ScrollView>
-            <View style={styles.container}>
-                <Text style={styles.label}>Nome:</Text>
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Nome do cliente"
-                        value={nomeCliente}
-                        onChangeText={(text) => setNomeCliente(text)} />
+        <>
+            <NavBar />
+            <ScrollView>
+                <View style={styles.container}>
+                    <Text style={styles.label}>Nome:</Text>
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Nome do cliente"
+                            value={nomeCliente}
+                            onChangeText={(text) => setNomeCliente(text)} />
+                    </View>
+
+                    <Text style={styles.label}>Telefone:</Text>
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Telefone do cliente"
+                            value={telefoneCliente}
+                            onChangeText={(text) => setTelefoneCliente(text)} />
+                    </View>
+
+                    <Text style={styles.label}>Data:</Text>
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Data do agendamento"
+                            value={data}
+                            onChangeText={(text) => setData(text)} />
+                    </View>
+
+                    <Text style={styles.label}>Horário:</Text>
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Horário do agendamento"
+                            value={horario}
+                            onChangeText={(text) => setHorario(text)} />
+                    </View>
+
+                    <Text style={styles.label}>Serviços:</Text>
+                    <View style={styles.pickerContainer}>
+                        <Picker
+                            style={styles.Picker}
+                            selectedValue={selectedService}
+                            onValueChange={(itemValue) => setSelectedService(itemValue)}
+                        >
+                            <Picker.Item label="Selecione um serviço" value="" />
+                            {serviceOptionss.map((service, index) => (
+                                <Picker.Item key={index} label={service} value={service} />
+                            ))}
+                        </Picker>
+                    </View>
+
+                    <View style={styles.buttonContainer}>
+                        <TouchableOpacity style={styles.button}>
+                            <Text onPress={handleAgendar} style={styles.buttonText}>Agendar</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.buttonGray}>
+                            <Text onPress={handleLimpar} style={styles.buttonText}>Limpar</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.buttonRed}>
+                            <Text onPress={handleVoltar} style={styles.buttonText}>Voltar</Text>
+                        </TouchableOpacity>
+                    </View>
+
                 </View>
-
-                <Text style={styles.label}>Telefone:</Text>
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Telefone do cliente"
-                        value={telefoneCliente}
-                        onChangeText={(text) => setTelefoneCliente(text)} />
-                </View>
-
-                <Text style={styles.label}>Data:</Text>
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Data do agendamento"
-                        value={data}
-                        onChangeText={(text) => setData(text)} />
-                </View>
-
-                <Text style={styles.label}>Horário:</Text>
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Horário do agendamento"
-                        value={horario}
-                        onChangeText={(text) => setHorario(text)} />
-                </View>
-
-                <Text style={styles.label}>Serviços:</Text>
-                <View style={styles.pickerContainer}>
-                    <Picker
-                        style={styles.Picker}
-                        selectedValue={selectedService}
-                        onValueChange={(itemValue) => setSelectedService(itemValue)}
-                    >
-                        <Picker.Item label="Selecione um serviço" value="" />
-                        {serviceOptionss.map((service, index) => (
-                            <Picker.Item key={index} label={service} value={service} />
-                        ))}
-                    </Picker>
-                </View>
-
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button}>
-                        <Text onPress={handleAgendar} style={styles.buttonText}>Agendar</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.buttonGray}>
-                        <Text onPress={handleLimpar} style={styles.buttonText}>Limpar</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.buttonRed}>
-                        <Text onPress={handleVoltar} style={styles.buttonText}>Voltar</Text>
-                    </TouchableOpacity>
-                </View>
-
-            </View>
-        </ScrollView>
+            </ScrollView>
+        </>
     )
 }
 

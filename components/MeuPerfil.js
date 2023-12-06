@@ -6,6 +6,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 const db = SQLite.openDatabase('BancoLembraAi.db');
 import * as Style from '../assets/styles';
 import { selectLogo } from '../utils/pega-imagem';
+import NavBar from './NavBar';
 
 async function getEstabelecimentoLogo(id) {
     const db = SQLite.openDatabase('BancoLembraAi.db');
@@ -160,118 +161,89 @@ const MeuPerfil = () => {
     }
 
     return (
-        <ScrollView>
-            <View style={styles.container}>
-                <ConnectBanco />
+        <>
+            <NavBar />
+            <ScrollView>
+                <View style={styles.container}>
+                    <ConnectBanco />
 
-                <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center' }} />
+                    <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center' }} />
 
-                <Text style={styles.label}>Estabelecimento</Text>
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={styles.input}
-                        value={name}
-                        onChangeText={text => setName(text)}
-                        editable={isNameEditing}
-                    />
-                    {isNameEditing ? (
-                        <TouchableOpacity onPress={() => setNameEditing(false)}>
-                            <Text style={styles.editText}>Salvar</Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity onPress={handleEditName}>
-                            <Text style={styles.editText}>Editar</Text>
-                        </TouchableOpacity>
-                    )}
-                    {isNameEditing && (
-                        <TouchableOpacity onPress={() => handleCancelName(false)}>
-                            <Text style={styles.removeText}>Cancelar</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-
-
-                <Text style={styles.label}>CNPJ</Text>
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={styles.input}
-                        value={String(cnpj)}
-                        onChangeText={text => setCnpj(text)}
-                        editable={isCnpjEditing}
-                    />
-                    {isCnpjEditing ? (
-                        <TouchableOpacity onPress={() => handleEditCnpj(false)}>
-                            <Text style={styles.editText}>Salvar</Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity onPress={handleEditCnpj}>
-                            <Text style={styles.editText}>Editar</Text>
-                        </TouchableOpacity>
-                    )}
-                    {isCnpjEditing && (
-                        <TouchableOpacity onPress={() => handleCancelCnpj(false)}>
-                            <Text style={styles.removeText}>Cancelar</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-
-                <Text style={styles.label}>Ramo</Text>
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={styles.input}
-                        value={ramo}
-                        onChangeText={text => setRamo(text)}
-                        editable={isRamoEditing}
-                    />
-                    {isRamoEditing ? (
-                        <TouchableOpacity onPress={() => setRamoEditing(false)}>
-                            <Text style={styles.editText}>Salvar</Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity onPress={handleEditRamo}>
-                            <Text style={styles.editText}>Editar</Text>
-                        </TouchableOpacity>
-                    )}
-                    {isRamoEditing && (
-                        <TouchableOpacity onPress={() => handleCancelRamo(false)}>
-                            <Text style={styles.removeText}>Cancelar</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-
-                <View>
-                    <TouchableOpacity
-                        style={styles.button}
-                    >
-                        <Text onPress={handleAgendar} style={styles.buttonText}>Realizar agendamento</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <View>
-                    <Text style={styles.TextoAzul}>Agendamentos Programados</Text>
-                </View>
-                {agendamentos.map((appointment, index) => {
-                    return (
-                        <View style={styles.containerAgendamentos} key={index}>
-                            <TouchableOpacity key={index} onPress={() => handleEditarAgendamento()}>
-                                <Text style={styles.containerAgendamentosTexto}>{`Nome: ${appointment.Nome}`}</Text>
-                                <Text style={styles.containerAgendamentosTexto}>{`Telefone: ${appointment.Telefone}`}</Text>
-                                <Text style={styles.containerAgendamentosTexto}>{`Data: ${appointment.Data}`}</Text>
-                                <Text style={styles.containerAgendamentosTexto}>{`Horário: ${appointment.Horario}`}</Text>
-                                <Text style={styles.containerAgendamentosTexto}>{`Serviços: ${appointment.Servicos}`}</Text>
-                                {console.log("Dados do serviço: " + appointment.Servicos)}
+                    <Text style={styles.label}>Estabelecimento</Text>
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            value={name}
+                            onChangeText={text => setName(text)}
+                            editable={isNameEditing}
+                        />
+                        {isNameEditing ? (
+                            <TouchableOpacity onPress={() => setNameEditing(false)}>
+                                <Text style={styles.editText}>Salvar</Text>
                             </TouchableOpacity>
-                        </View>
-                    )
-                })}
+                        ) : (
+                            <TouchableOpacity onPress={handleEditName}>
+                                <Text style={styles.editText}>Editar</Text>
+                            </TouchableOpacity>
+                        )}
+                        {isNameEditing && (
+                            <TouchableOpacity onPress={() => handleCancelName(false)}>
+                                <Text style={styles.removeText}>Cancelar</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
 
-                <View>
-                    <Text style={styles.textCadastrado}>
-                        <Text onPress={handleIr} style={styles.textCadastradoRed}>Voltar</Text>
-                    </Text>
+
+                    <Text style={styles.label}>CNPJ</Text>
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            value={String(cnpj)}
+                            onChangeText={text => setCnpj(text)}
+                            editable={isCnpjEditing}
+                        />
+                        {isCnpjEditing ? (
+                            <TouchableOpacity onPress={() => handleEditCnpj(false)}>
+                                <Text style={styles.editText}>Salvar</Text>
+                            </TouchableOpacity>
+                        ) : (
+                            <TouchableOpacity onPress={handleEditCnpj}>
+                                <Text style={styles.editText}>Editar</Text>
+                            </TouchableOpacity>
+                        )}
+                        {isCnpjEditing && (
+                            <TouchableOpacity onPress={() => handleCancelCnpj(false)}>
+                                <Text style={styles.removeText}>Cancelar</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+
+                    <Text style={styles.label}>Ramo</Text>
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            value={ramo}
+                            onChangeText={text => setRamo(text)}
+                            editable={isRamoEditing}
+                        />
+                        {isRamoEditing ? (
+                            <TouchableOpacity onPress={() => setRamoEditing(false)}>
+                                <Text style={styles.editText}>Salvar</Text>
+                            </TouchableOpacity>
+                        ) : (
+                            <TouchableOpacity onPress={handleEditRamo}>
+                                <Text style={styles.editText}>Editar</Text>
+                            </TouchableOpacity>
+                        )}
+                        {isRamoEditing && (
+                            <TouchableOpacity onPress={() => handleCancelRamo(false)}>
+                                <Text style={styles.removeText}>Cancelar</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
                 </View>
-            </View>
-        </ScrollView>
+            </ScrollView>
+        </>
     );
 };
 

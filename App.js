@@ -20,6 +20,9 @@ import Form from './components/form';
 
 
 import * as SQLite from 'expo-sqlite';
+import RestaurarSistema from './components/RestaurarSistema';
+import FazerBackup from './components/FazerBackup';
+import RestaurarBackup from './components/RestaurarBackup';
 const db = SQLite.openDatabase('BancoLembraAi.db');
 
 const Stack = createNativeStackNavigator();
@@ -116,6 +119,18 @@ export default function App() {
 
         <Stack.Screen name="Opcoes">
           {props => <Opcoes/>}
+        </Stack.Screen>
+
+        <Stack.Screen name="RestaurarSistema">
+          {props => <RestaurarSistema/>}
+        </Stack.Screen>
+
+        <Stack.Screen name="FazerBackup">
+          {props => <FazerBackup/>}
+        </Stack.Screen>
+
+        <Stack.Screen name="RestaurarBackup">
+          {props => <RestaurarBackup/>}
         </Stack.Screen>
 
       </Stack.Navigator>

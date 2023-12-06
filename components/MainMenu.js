@@ -9,6 +9,7 @@ import { selectLogo } from '../utils/pega-imagem';
 import { format, parseISO } from 'date-fns';
 import Icon from "react-native-vector-icons/FontAwesome"
 import { Picker } from '@react-native-picker/picker';
+import NavBar from './NavBar';
 
 async function getEstabelecimentoLogo(id) {
     const db = SQLite.openDatabase('BancoLembraAi.db');
@@ -323,152 +324,152 @@ const MainMenu = () => {
     }
 
     return (
-        <ScrollView>
-            <View style={styles.container}>
-                <ConnectBanco />
-                <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center' }} />
-                <View>
-                    <TouchableOpacity
-                        style={styles.button}
-                    >
-                        <Text onPress={handleAgendar} style={styles.buttonText}>Realizar agendamento</Text>
-                    </TouchableOpacity>
-                </View>
-                <TouchableOpacity style={styles.buttonGray}>
-                    <Text onPress={handleOpcoes} style={styles.buttonText}>Opções</Text>
-                </TouchableOpacity>
+        <>
+        <NavBar/>
+            <ScrollView>
+                <View style={styles.container}>
+                    <ConnectBanco />
+                    <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center' }} />
+                    <View>
+                        <TouchableOpacity
+                            style={styles.button}
+                        >
+                            <Text onPress={handleAgendar} style={styles.buttonText}>Realizar agendamento</Text>
+                        </TouchableOpacity>
+                    </View>
 
-                <View>
-                    <Text style={styles.TextoAzul}>Agendamentos Programados</Text>
-                </View>
+                    <View>
+                        <Text style={styles.TextoAzul}>Agendamentos Programados</Text>
+                    </View>
 
-                <View style={styles.ladoAlado}>
-                    <View style={styles.cardStatus}>
-                        <View style={styles.cardStatusCircleAtendido}></View>
-                        <Text style={styles.cardStatusText}>Atendido</Text>
-                    </View>
-                    <View style={styles.cardStatus}>
-                        <View style={styles.cardStatusCircleAtrasado}></View>
-                        <Text style={styles.cardStatusText}>Atrasado</Text>
-                    </View>
-                    <View style={styles.cardStatus}>
-                        <View style={styles.cardStatusCircleCancelado}></View>
-                        <Text style={styles.cardStatusText}>Cancelado</Text>
-                    </View>
-                    <View style={styles.cardStatus}>
-                        <View style={styles.cardStatusCircleEspera}></View>
-                        <Text style={styles.cardStatusText}>Aguardando</Text>
-                    </View>
-                </View>
-
-                <View style={styles.ladoAlado}>
-                    {/* Botão com ícone à esquerda */}
-                    <TouchableOpacity onPress={() => handleEsquerdaClick()}>
-                        <Icon name="arrow-left" size={30} color="black" />
-                    </TouchableOpacity>
-                    {/* Botão no meio com ícone de calendário */}
-                    <TouchableOpacity onPress={() => handleCalendarioClick()} style={{ marginLeft: 20, marginRight: 20 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Icon name="calendar" size={30} color="black" />
-                            <Text style={{ marginLeft: 10, fontSize: 20 }}>Calendário</Text>
+                    <View style={styles.ladoAlado}>
+                        <View style={styles.cardStatus}>
+                            <View style={styles.cardStatusCircleAtendido}></View>
+                            <Text style={styles.cardStatusText}>Atendido</Text>
                         </View>
-                    </TouchableOpacity>
+                        <View style={styles.cardStatus}>
+                            <View style={styles.cardStatusCircleAtrasado}></View>
+                            <Text style={styles.cardStatusText}>Atrasado</Text>
+                        </View>
+                        <View style={styles.cardStatus}>
+                            <View style={styles.cardStatusCircleCancelado}></View>
+                            <Text style={styles.cardStatusText}>Cancelado</Text>
+                        </View>
+                        <View style={styles.cardStatus}>
+                            <View style={styles.cardStatusCircleEspera}></View>
+                            <Text style={styles.cardStatusText}>Aguardando</Text>
+                        </View>
+                    </View>
 
-                    {/* Botão com ícone à direita */}
-                    <TouchableOpacity onPress={() => handleDireitaClick()}>
-                        <Icon name="arrow-right" size={30} color="black" />
-                    </TouchableOpacity>
-                </View>
-                <View>
-                    {cardAberto && (
-                        <View style={styles.card}>
-                            <TouchableOpacity onPress={fecharCard}>
-                                <Text style={styles.fecharCard}>X</Text>
-                            </TouchableOpacity>
-
-                            <Text style={styles.cardHeader}>Selecionar data</Text>
-
-                            {/* Picker para seleção de ano */}
-                            <Picker
-                                selectedValue={anoSelecionado}
-                                style={styles.pickerAno}
-                                onValueChange={(valor) => handleAnoChange(valor)}
-                            >
-                                {Array.from({ length: 101 }, (_, index) => 2000 + index).map((ano) => (
-                                    <Picker.Item key={ano} label={ano.toString()} value={ano} />
-                                ))}
-                            </Picker>
-
-                            {/* Renderizar meses */}
-                            <View style={styles.mesesContainer}>
-                                {['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'].map((mes) => (
-                                    <TouchableOpacity
-                                        key={mes}
-                                        style={styles.mes}
-                                        onPress={() => selecionarMes(mes)}
-                                    >
-                                        <Text style={styles.textoMeses}>{mes}</Text>
-                                    </TouchableOpacity>
-                                ))}
+                    <View style={styles.ladoAlado}>
+                        {/* Botão com ícone à esquerda */}
+                        <TouchableOpacity onPress={() => handleEsquerdaClick()}>
+                            <Icon name="arrow-left" size={30} color="black" />
+                        </TouchableOpacity>
+                        {/* Botão no meio com ícone de calendário */}
+                        <TouchableOpacity onPress={() => handleCalendarioClick()} style={{ marginLeft: 20, marginRight: 20 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Icon name="calendar" size={30} color="black" />
+                                <Text style={{ marginLeft: 10, fontSize: 20 }}>Calendário</Text>
                             </View>
+                        </TouchableOpacity>
 
-                            {/* Renderizar dias do mês selecionado */}
-                            {mesSelecionado && (
-                                <View style={styles.diasContainer}>
-                                    {renderizarDiasDoMes()}
+                        {/* Botão com ícone à direita */}
+                        <TouchableOpacity onPress={() => handleDireitaClick()}>
+                            <Icon name="arrow-right" size={30} color="black" />
+                        </TouchableOpacity>
+                    </View>
+                    <View>
+                        {cardAberto && (
+                            <View style={styles.card}>
+                                <TouchableOpacity onPress={fecharCard}>
+                                    <Text style={styles.fecharCard}>X</Text>
+                                </TouchableOpacity>
+
+                                <Text style={styles.cardHeader}>Selecionar data</Text>
+
+                                {/* Picker para seleção de ano */}
+                                <Picker
+                                    selectedValue={anoSelecionado}
+                                    style={styles.pickerAno}
+                                    onValueChange={(valor) => handleAnoChange(valor)}
+                                >
+                                    {Array.from({ length: 101 }, (_, index) => 2000 + index).map((ano) => (
+                                        <Picker.Item key={ano} label={ano.toString()} value={ano} />
+                                    ))}
+                                </Picker>
+
+                                {/* Renderizar meses */}
+                                <View style={styles.mesesContainer}>
+                                    {['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'].map((mes) => (
+                                        <TouchableOpacity
+                                            key={mes}
+                                            style={styles.mes}
+                                            onPress={() => selecionarMes(mes)}
+                                        >
+                                            <Text style={styles.textoMeses}>{mes}</Text>
+                                        </TouchableOpacity>
+                                    ))}
                                 </View>
-                            )}
+
+                                {/* Renderizar dias do mês selecionado */}
+                                {mesSelecionado && (
+                                    <View style={styles.diasContainer}>
+                                        {renderizarDiasDoMes()}
+                                    </View>
+                                )}
+                            </View>
+                        )}
+                    </View>
+                    {hasAppointmentsForCurrentDate ? (
+                        agendamentos.map((appointment, index) => {
+                            const diaAtualAgendamento = appointment.Data;
+                            const dateAgendamento = new Date(
+                                parseInt(diaAtualAgendamento.split('/')[2], 10),
+                                parseInt(diaAtualAgendamento.split('/')[1], 10) - 1,
+                                parseInt(diaAtualAgendamento.split('/')[0], 10)
+                            );
+                            const formattedDiaAtualAgendamento = formatDate(dateAgendamento);
+
+                            if (formattedDiaAtualAgendamento === currentDate) {
+                                return (
+                                    <View key={index} style={styles.card}>
+                                        <TouchableOpacity
+                                            onPress={() => handleEditarAgendamento(appointment)}
+                                            style={{ flexDirection: 'row' }}
+                                        >
+                                            <View style={{ flex: 1 }}>
+                                                <View style={styles.cardHeader}>
+                                                    <Text style={styles.cardHeader}>Nome: {appointment.Nome}</Text>
+                                                </View>
+                                                <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
+                                                <Text style={styles.cardText}>Data: {appointment.Data}</Text>
+                                                <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
+                                                <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
+                                            </View>
+                                            <View style={getStatusStyle(appointment.Status, appointment.Horario)}></View>
+                                        </TouchableOpacity>
+                                    </View>
+                                );
+                            }
+
+                            return null;
+                        })
+                    ) : (
+                        <View style={styles.card}>
+                            <Text style={styles.cardHeader}>Dados recuperados: {currentDate}</Text>
+                            <Text style={styles.cardText}>Desculpe, não há dados para essa data.</Text>
                         </View>
                     )}
-                </View>
-                {hasAppointmentsForCurrentDate ? (
-                    agendamentos.map((appointment, index) => {
-                        const diaAtualAgendamento = appointment.Data;
-                        const dateAgendamento = new Date(
-                            parseInt(diaAtualAgendamento.split('/')[2], 10),
-                            parseInt(diaAtualAgendamento.split('/')[1], 10) - 1,
-                            parseInt(diaAtualAgendamento.split('/')[0], 10)
-                        );
-                        const formattedDiaAtualAgendamento = formatDate(dateAgendamento);
 
-                        if (formattedDiaAtualAgendamento === currentDate) {
-                            return (
-                                <View key={index} style={styles.card}>
-                                    <TouchableOpacity
-                                        onPress={() => handleEditarAgendamento(appointment)}
-                                        style={{ flexDirection: 'row' }}
-                                    >
-                                        <View style={{ flex: 1 }}>
-                                            <View style={styles.cardHeader}>
-                                                <Text style={styles.cardHeader}>Nome: {appointment.Nome}</Text>
-                                            </View>
-                                            <Text style={styles.cardText}>Telefone: {appointment.Telefone}</Text>
-                                            <Text style={styles.cardText}>Data: {appointment.Data}</Text>
-                                            <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
-                                            <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
-                                        </View>
-                                        <View style={getStatusStyle(appointment.Status, appointment.Horario)}></View>
-                                    </TouchableOpacity>
-                                </View>
-                            );
-                        }
-
-                        return null;
-                    })
-                ) : (
-                    <View style={styles.card}>
-                        <Text style={styles.cardHeader}>Dados recuperados: {currentDate}</Text>
-                        <Text style={styles.cardText}>Desculpe, não há dados para essa data.</Text>
+                    <View>
+                        <Text style={styles.textCadastrado}>
+                            <Text onPress={handleIr} style={styles.textCadastradoRed}>Voltar</Text>
+                        </Text>
                     </View>
-                )}
-
-                <View>
-                    <Text style={styles.textCadastrado}>
-                        <Text onPress={handleIr} style={styles.textCadastradoRed}>Voltar</Text>
-                    </Text>
                 </View>
-            </View>
-        </ScrollView>
+            </ScrollView>
+        </>
     );
 };
 
