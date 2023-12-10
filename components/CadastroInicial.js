@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Text, View, TextInput, Button, Image, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { ScrollView } from 'react-native';
 import * as SQLite from 'expo-sqlite';
@@ -165,8 +165,8 @@ function CadastroInicial() {
                 navigation.navigate('MainMenu');
             } else {
                 // Se não houver registros, tenta inserir o novo registro
-                const sql = `INSERT INTO Estabelecimento (Nome, CNPJ, Ramo, Logotipo) VALUES (?, ?, ?, ?)`;
-                const params = [nomeEstabelecimento, cnpj, selectedService, base64Logotipo];
+                const sql = `INSERT INTO Estabelecimento (Nome, CNPJ, Ramo, Logotipo, Tuto) VALUES (?, ?, ?, ?, ?)`;
+                const params = [nomeEstabelecimento, cnpj, selectedService, base64Logotipo, 1];
 
                 db.transaction(async (tx) => {
                     tx.executeSql(
@@ -228,10 +228,9 @@ function CadastroInicial() {
         return base64String;
     };
 
-
     return (
         <ScrollView style={styles.container}>
-            <ConnectBanco />
+            
             <View style={styles.formGroup}>
                 <Text style={styles.label}>Nome do Estabelecimento:</Text>
                 <TextInput

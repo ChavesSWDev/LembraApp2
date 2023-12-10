@@ -17,12 +17,12 @@ import EditarAgendamento from './components/EditarAgendamento';
 import MeuPerfil from './components/MeuPerfil';
 import Opcoes from './components/Opcoes';
 import Form from './components/form';
-
-
 import * as SQLite from 'expo-sqlite';
 import RestaurarSistema from './components/RestaurarSistema';
 import FazerBackup from './components/FazerBackup';
 import RestaurarBackup from './components/RestaurarBackup';
+import Colaboradores from './components/Colaboradores';
+import AddColaborador from './components/AddColaborador';
 const db = SQLite.openDatabase('BancoLembraAi.db');
 
 const Stack = createNativeStackNavigator();
@@ -131,6 +131,14 @@ export default function App() {
 
         <Stack.Screen name="RestaurarBackup">
           {props => <RestaurarBackup/>}
+        </Stack.Screen>
+
+        <Stack.Screen name="Colaboradores">
+          {props => <Colaboradores/>}
+        </Stack.Screen>
+
+        <Stack.Screen name="AddColaborador">
+          {props => <AddColaborador/>}
         </Stack.Screen>
 
       </Stack.Navigator>

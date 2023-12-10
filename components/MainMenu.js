@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import ConnectBanco from './BancoLembraAi';
+import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity, ScrollView, Clipboard, ToastAndroid } from 'react-native';
+import db from './BancoLembraAi';
 import * as SQLite from 'expo-sqlite';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-const db = SQLite.openDatabase('BancoLembraAi.db');
 import * as Style from '../assets/styles';
 import { selectLogo } from '../utils/pega-imagem';
 import { format, parseISO } from 'date-fns';
@@ -12,8 +11,6 @@ import { Picker } from '@react-native-picker/picker';
 import NavBar from './NavBar';
 
 async function getEstabelecimentoLogo(id) {
-    const db = SQLite.openDatabase('BancoLembraAi.db');
-
     const sql = 'SELECT Logotipo FROM Estabelecimento WHERE ID = ?';
     const params = [id];
 
@@ -275,8 +272,8 @@ const MainMenu = () => {
         navigation.navigate('Opcoes')
     }
 
-    const handleEditarAgendamento = (appointment) => {
-        navigation.navigate('EditarAgendamento', { appointmentData: appointment });
+    const handleEditarAgendamento = (appointment, name) => {
+        navigation.navigate('EditarAgendamento', { appointmentData: appointment, name });
     }
 
 
@@ -323,12 +320,26 @@ const MainMenu = () => {
         ));
     }
 
+    const handleCopiar = async (appointment) => {
+        try {
+            const dadosString =
+                "Olá " + appointment.Nome + ", tudo bem com você?" +
+                "\nNão se esqueça que você tem um agendamento na " + name + " na seguinte data: \nData: " + appointment.Data + "\nHorário: " + appointment.Horario + "\n\nObrigado pela preferência!";
+
+            Clipboard.setString(dadosString);
+            console.log('Dados copiados:', dadosString);
+            ToastAndroid.show('Dados copiados para a área de transferência!', ToastAndroid.SHORT);
+        } catch (error) {
+            console.error('Erro ao definir a área de transferência:', error);
+            ToastAndroid.show('Erro ao copiar dados!', ToastAndroid.SHORT);
+        }
+    };
+
     return (
         <>
-        <NavBar/>
+            <NavBar />
             <ScrollView>
                 <View style={styles.container}>
-                    <ConnectBanco />
                     <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center' }} />
                     <View>
                         <TouchableOpacity
@@ -435,7 +446,7 @@ const MainMenu = () => {
                                 return (
                                     <View key={index} style={styles.card}>
                                         <TouchableOpacity
-                                            onPress={() => handleEditarAgendamento(appointment)}
+                                            onPress={() => handleEditarAgendamento(appointment, name)}
                                             style={{ flexDirection: 'row' }}
                                         >
                                             <View style={{ flex: 1 }}>
@@ -446,6 +457,12 @@ const MainMenu = () => {
                                                 <Text style={styles.cardText}>Data: {appointment.Data}</Text>
                                                 <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
                                                 <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
+                                                <TouchableOpacity
+                                                    onPress={() => handleCopiar(appointment)}
+                                                    style={styles.buttonCopiar}
+                                                >
+                                                    <Text style={styles.buttonCopiarText}>Copiar</Text>
+                                                </TouchableOpacity>
                                             </View>
                                             <View style={getStatusStyle(appointment.Status, appointment.Horario)}></View>
                                         </TouchableOpacity>
@@ -662,6 +679,21 @@ const styles = StyleSheet.create({
         marginTop: 50,
         width: '30%',
         alignSelf: 'center',
+    },
+    buttonCopiar: {
+        backgroundColor: 'green',
+        paddingVertical: 3,
+        borderRadius: 1,
+        marginBottom: 1,
+        marginTop: 5,
+        width: '30%',
+        alignSelf: 'left',
+        borderRadius: 10
+    },
+    buttonCopiarText: {
+        textAlign: 'center',
+        color: 'white',
+        fontWeight: 'bold'
     },
     buttonText: {
         color: 'white',

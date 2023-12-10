@@ -32,6 +32,9 @@ const NavBar = () => {
 
     const goToMainMenu = () => {
         navigation.navigate('MainMenu');
+        if(isMenuOpen) {
+            setIsMenuOpen(!isMenuOpen)
+        }
     };
     const goToMeuPerfil = () => {
         navigation.navigate('MeuPerfil');
@@ -53,6 +56,10 @@ const NavBar = () => {
         navigation.navigate('RestaurarBackup');
         setIsMenuOpen(!isMenuOpen)
     }
+    const goToColaboradores = () => {
+        navigation.navigate('Colaboradores');
+        setIsMenuOpen(!isMenuOpen)
+    }
 
     return (
         <View style={styles.container}>
@@ -68,13 +75,16 @@ const NavBar = () => {
             </Animated.View>
             {isMenuOpen && (
                 <Animated.View style={[styles.menu, { transform: [{ translateX }] }]}>
+                    <TouchableOpacity style={styles.menuOption} onPress={goToMainMenu}>
+                        <Text>Home</Text>
+                    </TouchableOpacity>
                     <TouchableOpacity style={styles.menuOption} onPress={goToMeuPerfil}>
                         <Text>Meu Perfil</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.menuOption} onPress={() => console.log('Temas')}>
                         <Text>Temas</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.menuOption} onPress={() => console.log('Colaboradores')}>
+                    <TouchableOpacity style={styles.menuOption} onPress={goToColaboradores}>
                         <Text>Colaboradores</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.menuOption} onPress={goToOpcoes}>

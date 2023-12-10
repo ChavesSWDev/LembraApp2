@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import ConnectBanco from './BancoLembraAi';
 import * as SQLite from 'expo-sqlite';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-const db = SQLite.openDatabase('BancoLembraAi.db');
+
 import * as Style from '../assets/styles';
 import { selectLogo } from '../utils/pega-imagem';
 import NavBar from './NavBar';
+import db from './BancoLembraAi';
 
 async function getEstabelecimentoLogo(id) {
-    const db = SQLite.openDatabase('BancoLembraAi.db');
 
     const sql = 'SELECT Logotipo FROM Estabelecimento WHERE ID = ?';
     const params = [id];
@@ -165,7 +164,6 @@ const MeuPerfil = () => {
             <NavBar />
             <ScrollView>
                 <View style={styles.container}>
-                    <ConnectBanco />
 
                     <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center' }} />
 

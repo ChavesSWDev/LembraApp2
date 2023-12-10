@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { styles } from "./Notas";
 import Svg, { Image as SvgImage } from "react-native-svg";
@@ -6,18 +6,73 @@ import * as Style from '../assets/styles';
 import Icon from "react-native-vector-icons/FontAwesome"
 import { useNavigation } from "@react-navigation/native";
 import { ScrollView } from "react-native";
+import db from "./BancoLembraAi";
+
 
 const BemVindo = () => {
     const navigation = useNavigation();
 
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [showConfirmation, setShowConfirmation] = useState(false); // Estado para controlar a exibição da confirmação
+    const [showConfirmation, setShowConfirmation] = useState(false);
+    const [hasData, setHasData] = useState(false);
+    const [isTutoCompleted, setIsTutoCompleted] = useState(false);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const result = await new Promise((resolve, reject) => {
+                    db.transaction((tx) => {
+                        tx.executeSql(
+                            'SELECT COUNT(*) as rowCount FROM Estabelecimento',
+                            [],
+                            (_, result) => {
+                                const rowCount = result.rows.item(0).rowCount;
+                                resolve(rowCount > 0);
+                            },
+                            (_, error) => {
+                                reject(error);
+                            }
+                        );
+                    });
+                });
+
+                setHasData(result);
+
+                if (result) {
+                    const tutoValue = await new Promise((resolve, reject) => {
+                        db.transaction((tx) => {
+                            tx.executeSql(
+                                'SELECT Tuto FROM Estabelecimento WHERE ID = ?',
+                                [1],
+                                (_, result) => {
+                                    const tutoValue = result.rows.item(0).Tuto;
+                                    resolve(tutoValue);
+                                },
+                                (_, error) => {
+                                    reject(error);
+                                }
+                            );
+                        });
+                    });
+
+                    setIsTutoCompleted(tutoValue === 1);
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+
     const images = [
         require("../assets/Imagens/BoasVindas/BemVindo1.png"),
         require("../assets/Imagens/BoasVindas/BemVindo2.png"),
         require("../assets/Imagens/BoasVindas/BemVindo3.png"),
         require("../assets/Imagens/BoasVindas/BemVindo4.png"),
     ];
+
     const texts = [
         "Bem-vindo ao Lembra AI!",
         "O seu mais novo App favorito para anotações",
@@ -28,27 +83,31 @@ const BemVindo = () => {
     const nextImage = () => {
         if (currentIndex < images.length - 1) {
             setCurrentIndex(currentIndex + 1);
-            if (currentIndex === 2) {
-                setShowConfirmation(true); // Mostrar confirmação quando o usuário apertar "CONTINUAR" na terceira imagem
+            if (currentIndex === 0 && isTutoCompleted) {
+                if (hasData) {
+                    navigation.navigate('MainMenu');
+                } else {
+                    setShowConfirmation(true);
+                }
+            } else if (currentIndex === 2) {
+                setShowConfirmation(true);
             }
         } else {
-            setShowConfirmation(true); // Mostrar confirmação na quarta imagem também
+            setShowConfirmation(true);
         }
     };
 
     const prevImage = () => {
         if (currentIndex > 0) {
             setCurrentIndex(currentIndex - 1);
-            setShowConfirmation(false); // Esconder a confirmação ao voltar para imagens anteriores
+            setShowConfirmation(false);
         }
     };
 
     const handleConfirmation = (choice) => {
         if (choice === "SIM") {
-            // Navegar para a próxima tela de tutorial ou fazer ação correspondente
             navigation.navigate('Tutorial');
         } else {
-            // Navegar para a tela 'Notas' quando escolher "NÃO"
             navigation.navigate('CadastroInicial');
         }
     };
@@ -67,7 +126,7 @@ const BemVindo = () => {
                 </View>
                 <Text style={styles.headingSmall}>{texts[currentIndex]}</Text>
 
-                {showConfirmation ? ( // Renderizar os botões de confirmação quando showConfirmation for true
+                {showConfirmation ? (
                     <View style={customStyles.buttonContainer}>
                         <TouchableOpacity
                             style={customStyles.button}

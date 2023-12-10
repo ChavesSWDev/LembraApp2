@@ -5,37 +5,9 @@ import NavBar from './NavBar';
 import { Picker } from '@react-native-picker/picker';
 import * as SQLite from 'expo-sqlite';
 import { useNavigation, useRoute } from '@react-navigation/native';
-
-
-const db = SQLite.openDatabase('BancoLembraAi.db');
-
-
+import db from './BancoLembraAi';
 
 const Agendar = () => {
-    const relatedServiceSalaoOptions = [
-        'Corte de cabelo',
-        'Manicure e pedicure',
-        'Maquiagem',
-        'Tratamentos para cabelos',
-        'Depilação'
-    ]
-
-    const relatedServiceOficinaOptions = [
-        'Troca de óleo',
-        'Troca de pneus',
-        'Revisão',
-        'Consertos',
-        'Instalação de acessórios',
-    ]
-
-    const relatedServiceBarbeiroOptions = [
-        'Corte de cabelo',
-        'Barba',
-        'Bigode',
-        'Depilação facial',
-        'Hidratação capilar',
-    ]
-
     const [dados, setDados] = useState({
         Nome: '',
         CNPJ: '',

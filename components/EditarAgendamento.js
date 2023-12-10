@@ -1,22 +1,17 @@
 import React, { useEffect, useState } from 'react'
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, View } from 'react-native'
 import * as Style from '../assets/styles';
 import NavBar from './NavBar';
 import { Picker } from '@react-native-picker/picker';
 import * as SQLite from 'expo-sqlite';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Clipboard } from 'react-native';
-
-
-const db = SQLite.openDatabase('BancoLembraAi.db');
-
-
-
+import db from './BancoLembraAi';
 
 const EditarAgendamento = () => {
     const route = useRoute();
-    const { appointmentData } = route.params;
+    const { appointmentData, name } = route.params;
+    console.log("tentando achar nome estabelecimento:" + name)
     const [ramo, setRamo] = useState('');
     const [idAgendamento, setIdAgendamento] = useState(appointmentData?.ID);
     const [nomeCliente, setNomeCliente] = useState(appointmentData?.Nome || '');
@@ -105,29 +100,18 @@ const EditarAgendamento = () => {
     }
 
     const handleCopiar = async () => {
-        const dadosString =
-            "Dados do agendamento de " +
-            nomeCliente +
-            "\nTelefone: " +
-            telefoneCliente +
-            "\nData: " +
-            data +
-            "\nHorário: " +
-            horario +
-            "\nServiços: " +
-            selectedService +
-            "\nStatus: " +
-            selectedStatus;
+        try {
+            const dadosString =
+                "Olá " + nomeCliente + ", tudo bem com você?" +
+                "\nNão se esqueça que você tem um agendamento na " + name + " na seguinte data: \nData: " + data + "\nHorário: " + horario + "\n\nObrigado pela preferência!";
 
-        Clipboard.setString(dadosString)
-            .then(() => {
-                console.log('Dados copiados:', dadosString);
-                ToastAndroid.show('Dados copiados para a área de transferência!', ToastAndroid.SHORT);
-            })
-            .catch((error) => {
-                console.error('Erro ao definir a área de transferência:', error);
-                ToastAndroid.show('Erro ao copiar dados!', ToastAndroid.SHORT);
-            });
+            Clipboard.setString(dadosString);
+            console.log('Dados copiados:', dadosString);
+            ToastAndroid.show('Dados copiados para a área de transferência!', ToastAndroid.SHORT);
+        } catch (error) {
+            console.error('Erro ao definir a área de transferência:', error);
+            ToastAndroid.show('Erro ao copiar dados!', ToastAndroid.SHORT);
+        }
     };
 
 
