@@ -20,17 +20,21 @@ const RestaurarSistema = () => {
                 tx.executeSql('DROP TABLE IF EXISTS Estabelecimento');
                 tx.executeSql('DROP TABLE IF EXISTS Servico');
                 tx.executeSql('DROP TABLE IF EXISTS Agendamento');
+                tx.executeSql('DROP TABLE IF EXISTS Colaboradores');
 
                 // Em seguida, recrie as tabelas
                 tx.executeSql(
-                    'CREATE TABLE IF NOT EXISTS Estabelecimento (ID INTEGER PRIMARY KEY AUTOINCREMENT, Nome TEXT, CNPJ INTEGER, Ramo TEXT, Logotipo TEXT)'
+                    'CREATE TABLE IF NOT EXISTS Estabelecimento (ID INTEGER PRIMARY KEY AUTOINCREMENT, Nome TEXT, CNPJ INTEGER, Ramo TEXT, Logotipo TEXT, Tuto INTEGER)'
                 );
                 tx.executeSql(
                     'CREATE TABLE IF NOT EXISTS Servico (ID INTEGER PRIMARY KEY AUTOINCREMENT, Nome TEXT, Ramo TEXT, EstabelecimentoID INTEGER)'
                 );
                 tx.executeSql(
-                    'CREATE TABLE IF NOT EXISTS Agendamento (ID INTEGER PRIMARY KEY AUTOINCREMENT, Nome TEXT, Telefone TEXT, Data TEXT, Horario TEXT, Servicos TEXT, Status TEXT)'
+                    'CREATE TABLE IF NOT EXISTS Agendamento (ID INTEGER PRIMARY KEY AUTOINCREMENT, Nome TEXT, Telefone TEXT, Data TEXT, Horario TEXT, Servicos TEXT, Status TEXT, ColaboradorNome TEXT)'
                 );
+                tx.executeSql(
+                    'CREATE TABLE IF NOT EXISTS Colaboradores(ID INTEGER PRIMARY KEY AUTOINCREMENT, Nome TEXT)'
+                )
             },
             (erro) => {
                 console.error('Erro na transação', erro);
@@ -53,7 +57,7 @@ const RestaurarSistema = () => {
                         resetarDados();
                         Alert.alert('Sistema restaurado com sucesso!')
                         // Navegue para a página CadastroInicial após a redefinição
-                        navigation.navigate('CadastroInicial');
+                        navigation.navigate('BemVindo');
                     },
                     style: 'destructive',
                 },

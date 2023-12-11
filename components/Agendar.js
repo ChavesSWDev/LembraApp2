@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react'
-import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import React, { useEffect, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import * as Style from '../assets/styles';
 import NavBar from './NavBar';
-import { Picker } from '@react-native-picker/picker';
+import { CheckBox } from 'react-native-elements'; // Certifique-se de ter instalado o pacote react-native-elements
 import * as SQLite from 'expo-sqlite';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import db from './BancoLembraAi';
+import Icon from "react-native-vector-icons/FontAwesome"
+import Colaboradores from './Colaboradores';
 
 const Agendar = () => {
     const [dados, setDados] = useState({
@@ -15,15 +17,19 @@ const Agendar = () => {
         Logotipo: '',
     });
     const [ramo, setRamo] = useState('');
-    const [selectedService, setSelectedService] = useState('');
+    const [selectedServices, setSelectedServices] = useState([]);
+    const [selectedColaborador, setSelectedColaborador] = useState([]);
     const [nomeCliente, setNomeCliente] = useState('');
     const [telefoneCliente, setTelefoneCliente] = useState('');
     const [data, setData] = useState('');
     const [horario, setHorario] = useState('');
     const navigation = useNavigation();
-    const [serviceOptionss, setServiceOptionss] = useState([]);
+    const [serviceOptions, setServiceOptions] = useState([]);
     const [agendamentos, setAgendamentos] = useState([]);
-    const [status, setStatus] = useState("Aguardando")
+    const [status, setStatus] = useState('');
+    const [colaborador, setColaborador] = useState([])
+    const [cardAberto, setCardAberto] = useState(false);
+    const [cardColaboradorAberto, setCardColaboradorAberto] = useState(false);
 
     const route = useRoute();
     const { appointment } = route.params;
@@ -37,9 +43,59 @@ const Agendar = () => {
         }
     }, [appointment]);
 
+    const handleServiceToggle = (service) => {
+        // Toggle the selection state of the service
+        const isSelected = selectedServices.includes(service);
+        if (isSelected) {
+            setSelectedServices(selectedServices.filter((selected) => selected !== service));
+        } else {
+            setSelectedServices([...selectedServices, service]);
+        }
+    };
+
+    const handleColaboradorToggle = (colaborator) => {
+        const isSelected = selectedColaborador.includes(colaborator);
+
+        // If the current service is already selected, do nothing
+        if (isSelected) {
+            return;
+        }
+        // Deselect all previously selected collaborators
+        const updatedSelectedColaborador = selectedColaborador.filter(
+            (selected) => !colaborador.includes(selected)
+        );
+        // Select the current service
+        setSelectedColaborador([...updatedSelectedColaborador, colaborator]);
+        console.log(selectedColaborador);
+    };
+
+    const handleCardServicos = () => {
+        if (cardAberto === true) {
+            setCardAberto(false);
+        } else {
+            setCardAberto(true);
+        }
+    }
+
+    const handleCardColaboradores = () => {
+        if (cardColaboradorAberto === true) {
+            setCardColaboradorAberto(false);
+        } else {
+            setCardColaboradorAberto(true);
+        }
+    }
+
+    const setAppointmentStatus = (newStatus, callback) => {
+        setStatus(newStatus);
+        callback();
+    };
+
+    // ...
+
     const handleAgendar = () => {
-        if (!nomeCliente || !telefoneCliente || !data || !horario || !selectedService) {
+        if (!nomeCliente || !telefoneCliente || !data || !horario || selectedServices.length === 0) {
             console.log('Por favor, preencha todos os campos.');
+            Alert.alert('Por favor, preencha todos os campos.');
             return;
         }
 
@@ -64,25 +120,56 @@ const Agendar = () => {
                         Alert.alert('Aviso', 'Já existe um agendamento para esta data e horário.');
                     } else {
                         // Se não houver agendamento, procede com a inserção
-                        const insertSql = `
-                            INSERT INTO Agendamento (Nome, Telefone, Data, Horario, Servicos, Status)
-                            VALUES (?, ?, ?, ?, ?, ?)
-                        `;
 
-                        const insertParams = [nomeCliente, telefoneCliente, data, horario, selectedService, status];
+                        // Converte a data e horário do agendamento para o formato esperado
+                        const [day, month, year] = data.split('/');
+                        const [hours, minutes] = horario.split(':');
+                        const agendamentoDate = new Date(`${year}-${month}-${day}T${hours}:${minutes}`);
 
-                        tx.executeSql(
-                            insertSql,
-                            insertParams,
-                            (_, result) => {
-                                console.log('Dado cadastrado com sucesso!', result);
-                            },
-                            (_, error) => {
-                                console.error('Erro ao cadastrar os dados!', error);
-                            }
-                        );
+                        // Obtém a data e hora atual
+                        const currentDate = new Date();
+                        const formattedCurrentDate = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}T${currentDate.getHours().toString().padStart(2, '0')}:${currentDate.getMinutes().toString().padStart(2, '0')}`;
 
-                        navigation.navigate('MainMenu');
+                        // Lógica para determinar o status com base na comparação da data e horário
+                        let newStatus;
+                        if (agendamentoDate > new Date(formattedCurrentDate)) {
+                            newStatus = "Aguardando";
+                        } else {
+                            newStatus = "Atrasado";
+                        }
+
+                        // Se necessário, você pode adicionar mais lógica para outros casos
+
+                        // Atualiza o status e executa a inserção no banco de dados
+                        setAppointmentStatus(newStatus, () => {
+                            const insertSql = `
+                                INSERT INTO Agendamento (Nome, Telefone, Data, Horario, Servicos, Status, ColaboradorNome)
+                                VALUES (?, ?, ?, ?, ?, ?, ?)
+                            `;
+
+                            const insertParams = [
+                                nomeCliente,
+                                telefoneCliente,
+                                data,
+                                horario,
+                                selectedServices.join(', '), // serviços selecionados
+                                newStatus,
+                                JSON.stringify(selectedColaborador) // convertendo a array para string JSON
+                            ];
+
+                            tx.executeSql(
+                                insertSql,
+                                insertParams,
+                                (_, result) => {
+                                    console.log('Dado cadastrado com sucesso!', result);
+                                },
+                                (_, error) => {
+                                    console.error('Erro ao cadastrar os dados!', error);
+                                }
+                            );
+
+                            navigation.navigate('MainMenu');
+                        });
                     }
                 },
                 (_, error) => {
@@ -97,12 +184,13 @@ const Agendar = () => {
         setTelefoneCliente('');
         setData('');
         setHorario('');
-        setSelectedService('Selecione um serviço')
-    }
+        setSelectedServices([]);
+        setSelectedColaborador([])
+    };
 
     const handleVoltar = () => {
-        navigation.navigate('MainMenu')
-    }
+        navigation.navigate('MainMenu');
+    };
 
     useEffect(() => {
         async function buscarDados() {
@@ -112,9 +200,6 @@ const Agendar = () => {
                         'SELECT * FROM Servico',
                         [],
                         (_, resultado) => {
-                            // Processar os resultados aqui
-                            console.log('Dados recuperados com sucesso:', resultado);
-
                             let options = [];
                             if (resultado.rows.length > 0) {
                                 for (let i = 0; i < resultado.rows.length; i++) {
@@ -123,8 +208,7 @@ const Agendar = () => {
                                 }
                             }
 
-                            setServiceOptionss(options); // Atualize o estado com os dados do serviço
-                            console.log(serviceOptionss)
+                            setServiceOptions(options);
                         },
                         (_, erro) => {
                             console.error('Erro ao recuperar dados:', erro);
@@ -139,6 +223,40 @@ const Agendar = () => {
 
         buscarDados();
     }, []);
+
+    useEffect(() => {
+        async function buscarDados2() {
+            db.transaction(
+                (tx) => {
+                    tx.executeSql(
+                        'SELECT * FROM Colaboradores',
+                        [],
+                        (_, resultado) => {
+                            let options = [];
+                            if (resultado.rows.length > 0) {
+                                for (let i = 0; i < resultado.rows.length; i++) {
+                                    const registro = resultado.rows.item(i);
+                                    options.push(registro["Nome"]);
+                                }
+                            }
+
+                            setColaborador(options);
+                        },
+                        (_, erro) => {
+                            console.error('Erro ao recuperar dados:', erro);
+                        }
+                    );
+                },
+                (erro) => {
+                    console.error('Erro na transacao', erro);
+                }
+            );
+        }
+
+        buscarDados2();
+    }, []);
+
+
 
     return (
         <>
@@ -181,19 +299,51 @@ const Agendar = () => {
                             onChangeText={(text) => setHorario(text)} />
                     </View>
 
-                    <Text style={styles.label}>Serviços:</Text>
-                    <View style={styles.pickerContainer}>
-                        <Picker
-                            style={styles.Picker}
-                            selectedValue={selectedService}
-                            onValueChange={(itemValue) => setSelectedService(itemValue)}
-                        >
-                            <Picker.Item label="Selecione um serviço" value="" />
-                            {serviceOptionss.map((service, index) => (
-                                <Picker.Item key={index} label={service} value={service} />
-                            ))}
-                        </Picker>
-                    </View>
+                    <TouchableOpacity style={styles.button} onPress={() => handleCardServicos()}>
+                        <Text style={styles.buttonText}>Serviços</Text>
+                    </TouchableOpacity>
+                    {cardAberto && (
+                        <View style={styles.card}>
+                            <Text style={styles.cardHeader}>Selecionar serviços</Text>
+
+                            {/* Renderizar opções de serviços */}
+                            <View style={styles.containerCheck}>
+                                {serviceOptions.map((service, index) => (
+                                    <View key={index} style={styles.checkboxContainer}>
+                                        <CheckBox
+                                            title={service}
+                                            checked={selectedServices.includes(service)}
+                                            onPress={() => handleServiceToggle(service)}
+                                            containerStyle={styles.checkbox} // Apply the checkbox styles
+                                        />
+                                    </View>
+                                ))}
+                            </View>
+                        </View>
+                    )}
+
+                    <TouchableOpacity style={styles.button} onPress={() => handleCardColaboradores()}>
+                        <Text style={styles.buttonText}>Colaborador</Text>
+                    </TouchableOpacity>
+                    {cardColaboradorAberto && (
+                        <View style={styles.card}>
+                            <Text style={styles.cardHeader}>Selecionar colaborador</Text>
+
+                            {/* Renderizar opções de serviços */}
+                            <View style={styles.containerCheck}>
+                                {colaborador.map((colaborator, index) => (
+                                    <View key={index} style={styles.checkboxContainer}>
+                                        <CheckBox
+                                            title={colaborator}
+                                            checked={selectedColaborador.includes(colaborator)}
+                                            onPress={() => handleColaboradorToggle(colaborator)}
+                                            containerStyle={styles.checkbox} // Apply the checkbox styles
+                                        />
+                                    </View>
+                                ))}
+                            </View>
+                        </View>
+                    )}
 
                     <View style={styles.buttonContainer}>
                         <TouchableOpacity style={styles.button}>
@@ -208,12 +358,11 @@ const Agendar = () => {
                             <Text onPress={handleVoltar} style={styles.buttonText}>Voltar</Text>
                         </TouchableOpacity>
                     </View>
-
                 </View>
             </ScrollView>
         </>
-    )
-}
+    );
+};
 
 const styles = StyleSheet.create({
     container: {
@@ -235,10 +384,32 @@ const styles = StyleSheet.create({
     textCadastradoRed: {
         color: 'red'
     },
+    cardHeader: {
+        color: Style.color,
+        fontWeight: 'bold',
+        alignSelf: 'center'
+    },
     inputContainer: {
         flexDirection: 'row',
         alignSelf: 'center',
         marginBottom: 15,
+    },
+    checkboxContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 5,
+    },
+    checkbox: {
+        marginLeft: 15,
+        width: '90%'
+    },
+    containerCheck: {
+        backgroundColor: '#ccc',
+        paddingVertical: 10,
+        borderRadius: 10,
+        marginBottom: 10,
+        width: '80%',
+        alignSelf: 'center',
     },
     input: {
         width: '60%',

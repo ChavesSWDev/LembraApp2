@@ -6,7 +6,9 @@ import * as SQLite from 'expo-sqlite';
 import ConnectBanco from './BancoLembraAi';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
+import * as Style from '../assets/styles';
 import { convertImageToBase64 } from './BancoLembraAi';
+import { CheckBox } from 'react-native-elements';
 
 
 
@@ -20,7 +22,8 @@ function CadastroInicial() {
     const [relatedServices, setRelatedServices] = useState([]);
     const [selectedRelatedService, setSelectedRelatedService] = useState('');
     const [base64Logotipo, setBase64Logotipo] = useState('');
-    const [selectedServices, setSelectedServicess] = useState([]);
+    const [selectedServices, setSelectedServices] = useState([]);
+    const [cardAberto, setCardAberto] = useState(false);
     print(CadastroInicial);
     const db = SQLite.openDatabase('./BancoLembraAi.db');
 
@@ -126,8 +129,6 @@ function CadastroInicial() {
         }
     };
 
-
-
     async function handleCadastro() {
         // Verifique se os campos obrigatórios estão preenchidos
         if (!areInputsFilled()) {
@@ -164,6 +165,7 @@ function CadastroInicial() {
                 Alert.alert("Já existe dados cadastrados, você será redirecionado ao Menu Principal.")
                 navigation.navigate('MainMenu');
             } else {
+                console.log(nomeEstabelecimento, cnpj, selectedService)
                 // Se não houver registros, tenta inserir o novo registro
                 const sql = `INSERT INTO Estabelecimento (Nome, CNPJ, Ramo, Logotipo, Tuto) VALUES (?, ?, ?, ?, ?)`;
                 const params = [nomeEstabelecimento, cnpj, selectedService, base64Logotipo, 1];
@@ -228,9 +230,32 @@ function CadastroInicial() {
         return base64String;
     };
 
+    const handleCardRamos = () => {
+        if (cardAberto === true) {
+            setCardAberto(false);
+        } else {
+            setCardAberto(true);
+        }
+    }
+
+    const handleServiceToggle = (service) => {
+        const isSelected = selectedService.includes(service);
+
+        if (isSelected) {
+            // Se o serviço já estiver selecionado, desmarque-o
+            const updatedSelectedService = selectedService.filter(
+                (selected) => selected !== service
+            );
+            setSelectedService(updatedSelectedService);
+        } else {
+            // Se o serviço não estiver selecionado, desmarque os outros e selecione o atual
+            setSelectedService([service]);
+        }
+    };
+
     return (
         <ScrollView style={styles.container}>
-            
+
             <View style={styles.formGroup}>
                 <Text style={styles.label}>Nome do Estabelecimento:</Text>
                 <TextInput
@@ -251,9 +276,29 @@ function CadastroInicial() {
                 />
             </View>
 
+            {/* <TouchableOpacity style={styles.buttonRamos} onPress={() => handleCardRamos()}>
+                <Text style={styles.buttonText}>Ramos</Text>
+            </TouchableOpacity>
+            {cardAberto && (
+                <View style={styles.card}>
+                    <Text style={styles.cardHeader}>Selecionar ramos</Text>
+                    <View style={styles.containerCheck}>
+                        {serviceOptions.map((service, index) => (
+                            <View key={index} style={styles.checkboxContainer}>
+                                <CheckBox
+                                    title={service}
+                                    checked={selectedService.includes(service)}
+                                    onPress={() => handleServiceToggle(service)}
+                                    containerStyle={styles.checkbox}
+                                />
+                            </View>
+                        ))}
+                    </View>
+                </View>
+            )} */}
             <View style={styles.formGroup}>
                 <Text style={styles.label}>Ramos:</Text>
-                <View style={styles.pickerContainer}>
+                <View>
                     <Picker
                         selectedValue={selectedService}
                         style={styles.picker}
@@ -261,22 +306,26 @@ function CadastroInicial() {
                             setSelectedService(itemValue);
                         }}
                     >
-                        <Picker.Item label='Selecione um ramo' />
+                        <Picker.Item style={styles.pickerText} label='Selecione um ramo' />
                         {serviceOptions.map((service, index) => (
-                            <Picker.Item key={index} label={service} value={service} />
+                            <Picker.Item style={styles.pickerText} key={index} label={service} value={service} />
                         ))}
                     </Picker>
                 </View>
             </View>
 
-            <View style={styles.formGroup}>
+            <View style={styles.formGroup2}>
                 <Text style={styles.label}>Logotipo:</Text>
-                <Button title="Selecionar Imagem" onPress={selectImage} />
+                <TouchableOpacity style={styles.button} onPress={selectImage}>
+                    <Text style={styles.buttonText}>Selecionar Imagem</Text>
+                </TouchableOpacity>
                 {logotipo && <Image source={{ uri: logotipo }} style={styles.logoImage} />}
             </View>
 
             <View style={styles.formGroupCadastrar}>
-                <Button title="Cadastrar" onPress={handleCadastro} style={styles.button} />
+                <TouchableOpacity style={styles.button} onPress={handleCadastro}>
+                    <Text style={styles.buttonText}>Cadastrar</Text>
+                </TouchableOpacity>
             </View>
 
             <Text style={styles.textCadastrado}>
@@ -290,6 +339,24 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 16,
     },
+    cardHeader: {
+        color: Style.color,
+        fontWeight: 'bold',
+        alignSelf: 'center'
+    },
+    containerCheck: {
+        backgroundColor: '#ccc',
+        paddingVertical: 10,
+        borderRadius: 10,
+        marginBottom: 10,
+        width: '80%',
+        alignSelf: 'center',
+    },
+    checkboxContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 5,
+    },
     textCadastrado: {
         marginTop: 30
     },
@@ -298,6 +365,10 @@ const styles = StyleSheet.create({
     },
     formGroup: {
         marginBottom: 16,
+        marginTop: 15
+    },
+    formGroup2: {
+        marginTop: 90,
     },
     label: {
         fontSize: 18,
@@ -319,7 +390,22 @@ const styles = StyleSheet.create({
         height: 55,
     },
     picker: {
-        height: 40,
+        backgroundColor: Style.color,
+        marginHorizontal: 10,
+        marginBottom: 10,
+        marginTop: 10,
+        width: '100%',
+        justifyContent: 'center',
+        paddingHorizontal: 20,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    pickerText: {
+        color: 'black',
+        justifyContent: 'center',
+        paddingHorizontal: 20,
+        fontWeight: 'bold',
+        fontSize: 20
     },
     logoImage: {
         width: 100,
@@ -330,13 +416,32 @@ const styles = StyleSheet.create({
         marginTop: 16,
     },
     button: {
-        backgroundColor: 'blue',
+        backgroundColor: Style.color,
         color: 'white',
         fontSize: 18,
         fontWeight: 'bold',
         padding: 10,
         borderRadius: 8,
         textAlign: 'center',
+    },
+    buttonRamos: {
+        backgroundColor: Style.color,
+        paddingVertical: 10,
+        borderRadius: 10,
+        marginBottom: 10,
+        marginTop: 50,
+        width: '30%',
+        alignSelf: 'center',
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    checkbox: {
+        marginLeft: 15,
+        width: '90%'
     },
 });
 

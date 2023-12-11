@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity, ScrollView, Clipboard, ToastAndroid } from 'react-native';
+import { View, Platform, Text, TextInput, Image, StyleSheet, TouchableOpacity, ScrollView, ToastAndroid } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import db from './BancoLembraAi';
 import * as SQLite from 'expo-sqlite';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -9,6 +10,8 @@ import { format, parseISO } from 'date-fns';
 import Icon from "react-native-vector-icons/FontAwesome"
 import { Picker } from '@react-native-picker/picker';
 import NavBar from './NavBar';
+import Toast from 'react-native-root-toast';
+import Colaboradores from './Colaboradores';
 
 async function getEstabelecimentoLogo(id) {
     const sql = 'SELECT Logotipo FROM Estabelecimento WHERE ID = ?';
@@ -46,6 +49,8 @@ const MainMenu = () => {
     const [originalCnpj, setOriginalCnpj] = useState(cnpj);
     const [originalRamo, setOriginalRamo] = useState(ramo);
     const [agendamentos, setAgendamentos] = useState([]);
+    const ele = '';
+
     const today = new Date();
     const todayString = format(today, 'dd/MM/yyyy');
 
@@ -130,7 +135,7 @@ const MainMenu = () => {
     const fetchAgendamentos = () => {
         db.transaction((tx) => {
             tx.executeSql(
-                'SELECT ID, Nome, Telefone, Data, Horario, Servicos, Status FROM Agendamento',
+                'SELECT ID, Nome, Telefone, Data, Horario, Servicos, Status, ColaboradorNome FROM Agendamento',
                 [],
                 (_, { rows }) => {
                     const appointments = rows._array;
@@ -157,6 +162,9 @@ const MainMenu = () => {
     const [dataHoje, setDataHoje] = useState(() => formatDate(new Date()));
 
     const currentTime = new Date();
+    const currentDateString = `${currentTime.getDate()}/${currentTime.getMonth() + 1}/${currentTime.getFullYear()}`;
+    const currentTimeFormatted = new Date(currentDateString);
+
 
 
     const sortAppointmentsByTimeAndStatus = (appointments) => {
@@ -224,27 +232,40 @@ const MainMenu = () => {
         }, [])
     );
 
-    const getStatusStyle = (status, horario) => {
+    const handleNotification = (message, duration) => {
+        switch (Platform.OS) {
+            case 'android':
+                ToastAndroid.show(message, duration)
+                break;
+
+            case 'ios':
+                Toast.show(message)
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    const getStatusStyle = (status, data, horario) => {
+        const [appointmentYear, appointmentMonth, appointmentDay] = data.split('/').map(Number);
         const [appointmentHour, appointmentMinute] = horario.split(':').map(Number);
 
-        // Configurando a hora do agendamento com a data atual
-        const appointmentTime = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), appointmentHour, appointmentMinute);
+        // Configurando a data e hora do agendamento
+        const appointmentTime = new Date(appointmentYear, appointmentMonth - 1, appointmentDay, appointmentHour, appointmentMinute);
 
-        // Se o horário do agendamento for anterior ao horário atual, marque como "Atrasado"
-        if (appointmentTime > currentTime && status === 'Aguardando') {
-            return styles.rightSideYellow; // Mantenha o estilo "Aguardando" se estiver no passado, mas o status ainda for "Aguardando"
+        // Formatando a data atual para o mesmo formato que o appointment.Data
+        const currentDateString = `${currentTime.getDate()}/${currentTime.getMonth() + 1}/${currentTime.getFullYear()}`;
+        const currentTimeFormatted = new Date(currentDateString);
+
+        // Se a data do agendamento é no futuro, defina como "Aguardando"
+        if (appointmentTime > currentTimeFormatted) {
+            return styles.rightSideBlue;
         }
 
-        if (appointmentTime < currentTime && status !== 'Atrasado' && status !== 'Cancelado' && status !== 'Atendido') {
-            return styles.rightSideYellow; // Altere para "Atrasado" se estiver no passado e o status não for "Atrasado", "Cancelado" ou "Atendido"
-        }
-
-        if (appointmentTime >= currentTime && status === 'Atrasado') {
-            return styles.rightSideBlue; // Se a data do agendamento for após a data atual, defina como "Aguardando" para evitar que seja marcado como "Atrasado"
-        }
-
-        if (appointmentTime < currentTime && status === 'Aguardando') {
-            return styles.rightSideBlue; // Mantenha o estilo "Aguardando" se estiver no passado, mas o status ainda for "Aguardando"
+        // Se a data do agendamento é no passado, defina como "Atrasado"
+        if (appointmentTime < currentTimeFormatted) {
+            return styles.rightSideYellow;
         }
 
         // Lógica existente para outros casos
@@ -261,6 +282,7 @@ const MainMenu = () => {
                 return {}; // Pode adicionar um estilo padrão se nenhum dos casos acima corresponder
         }
     };
+
 
     const handleAgendar = () => {
         navigation.navigate('Agendar', {
@@ -324,16 +346,63 @@ const MainMenu = () => {
         try {
             const dadosString =
                 "Olá " + appointment.Nome + ", tudo bem com você?" +
-                "\nNão se esqueça que você tem um agendamento na " + name + " na seguinte data: \nData: " + appointment.Data + "\nHorário: " + appointment.Horario + "\n\nObrigado pela preferência!";
+                "\nNão se esqueça que você tem um agendamento na " + name + " na seguinte data: \nData: " + appointment.Data + "\nHorário: " + appointment.Horario + "\nCom o(a) profissional " + JSON.parse(appointment.ColaboradorNome) + "\n\nObrigado pela preferência!";
 
-            Clipboard.setString(dadosString);
+            await Clipboard.setStringAsync(dadosString);
             console.log('Dados copiados:', dadosString);
-            ToastAndroid.show('Dados copiados para a área de transferência!', ToastAndroid.SHORT);
+            handleNotification('Dados copiados para a área de transferência!', ToastAndroid.SHORT);
         } catch (error) {
             console.error('Erro ao definir a área de transferência:', error);
-            ToastAndroid.show('Erro ao copiar dados!', ToastAndroid.SHORT);
+            handleNotification('Erro ao copiar dados!', ToastAndroid.SHORT);
         }
     };
+
+    useEffect(() => {
+        // Função para verificar e atualizar status dos agendamentos
+        const verificarAgendamentos = async () => {
+            const now = new Date();
+    
+            for (const appointment of agendamentos) {
+                const { Data, Horario, Status, ID } = appointment;
+    
+                const appointmentDateTime = new Date(`${Data} ${Horario}`);
+                const currentDateTime = new Date();
+    
+                // Verifica se a diferença entre o horário do agendamento e o horário atual é maior que 0
+                const diffInMinutes = (appointmentDateTime - currentDateTime) / (1000 * 60);
+                
+                if (diffInMinutes < 0 && Status !== 'Atendido') {
+                    // Atualiza o status para "Atrasado"
+                    await new Promise((resolve) => {
+                        db.transaction((tx) => {
+                            tx.executeSql(
+                                'UPDATE Agendamento SET Status = ? WHERE ID = ?',
+                                ['Atrasado', ID],
+                                (_, results) => {
+                                    console.log('Agendamento atualizado com sucesso:', results);
+                                    resolve();
+                                },
+                                (_, error) => {
+                                    console.error('Erro ao atualizar agendamento:', error);
+                                    resolve();
+                                }
+                            );
+                        });
+                    });
+    
+                    // Atualiza o estado local dos agendamentos
+                    await fetchAgendamentos();
+                }
+            }
+        };
+    
+        // Execute a verificação a cada 60 segundos
+        const intervalId = setInterval(async () => {
+            await verificarAgendamentos();
+        }, 10000);
+    
+        return () => clearInterval(intervalId);
+    }, [agendamentos]);
 
     return (
         <>
@@ -446,7 +515,7 @@ const MainMenu = () => {
                                 return (
                                     <View key={index} style={styles.card}>
                                         <TouchableOpacity
-                                            onPress={() => handleEditarAgendamento(appointment, name)}
+                                            onPress={() => handleEditarAgendamento(appointment, name, JSON.parse(appointment.ColaboradorNome)[0])}
                                             style={{ flexDirection: 'row' }}
                                         >
                                             <View style={{ flex: 1 }}>
@@ -457,6 +526,7 @@ const MainMenu = () => {
                                                 <Text style={styles.cardText}>Data: {appointment.Data}</Text>
                                                 <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
                                                 <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
+                                                <Text style={styles.cardText}>Colaborador: {JSON.parse(appointment.ColaboradorNome)[0]}</Text>
                                                 <TouchableOpacity
                                                     onPress={() => handleCopiar(appointment)}
                                                     style={styles.buttonCopiar}
@@ -464,7 +534,7 @@ const MainMenu = () => {
                                                     <Text style={styles.buttonCopiarText}>Copiar</Text>
                                                 </TouchableOpacity>
                                             </View>
-                                            <View style={getStatusStyle(appointment.Status, appointment.Horario)}></View>
+                                            <View style={getStatusStyle(appointment.Status, appointment.Data, appointment.Horario)}></View>
                                         </TouchableOpacity>
                                     </View>
                                 );

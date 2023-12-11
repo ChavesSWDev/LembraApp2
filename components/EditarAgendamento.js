@@ -5,43 +5,53 @@ import NavBar from './NavBar';
 import { Picker } from '@react-native-picker/picker';
 import * as SQLite from 'expo-sqlite';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { Clipboard } from 'react-native';
 import db from './BancoLembraAi';
+import { CheckBox } from 'react-native-elements';
 
 const EditarAgendamento = () => {
     const route = useRoute();
     const { appointmentData, name } = route.params;
-    console.log("tentando achar nome estabelecimento:" + name)
-    const [ramo, setRamo] = useState('');
-    const [idAgendamento, setIdAgendamento] = useState(appointmentData?.ID);
-    const [nomeCliente, setNomeCliente] = useState(appointmentData?.Nome || '');
-    const [telefoneCliente, setTelefoneCliente] = useState(appointmentData?.Telefone || '');
-    const [data, setData] = useState(appointmentData?.Data || '');
-    const [horario, setHorario] = useState(appointmentData?.Horario || '');
-    const [selectedService, setSelectedService] = useState(appointmentData?.Servicos || '');
-    const [selectedStatus, setSelectedStatus] = useState(appointmentData?.Status || '');
-    const [dadosCopiados, setDadosCopiados] = useState('');
+    const [nomeCliente, setNomeCliente] = useState(appointmentData?.Nome ?? '');
+    const [telefoneCliente, setTelefoneCliente] = useState(appointmentData?.Telefone ?? '');
+    const [data, setData] = useState(appointmentData?.Data ?? '');
+    const [horario, setHorario] = useState(appointmentData?.Horario ?? '');
+    const [selectedStatus, setSelectedStatus] = useState(appointmentData?.Status ?? '');
+    const [selectedServices, setSelectedServices] = useState([]);
+    const [cardAberto, setCardAberto] = useState(false)
+    const [cardColaboradorAberto, setCardColaboradorAberto] = useState(false);
     const navigation = useNavigation();
-    const [serviceOptionss, setServiceOptionss] = useState([]);
-    const [statusOptionss, setStatusOptionss] = useState([]);
-    const [agendamentos, setAgendamentos] = useState([]);
+    const [selectedColaborador, setSelectedColaborador] = useState([]);
+    const [colaborador, setColaborador] = useState([]);
+
+    const [serviceOptions, setServiceOptions] = useState([]);
+    const [selectedServicesInAppointment, setSelectedServicesInAppointment] = useState(appointmentData?.ColaboradorNome || []);
+    const [selectedColaboradorInAppointment, setSelectedColaboradorInAppointment] = useState(appointmentData?.ColaboradorNome || []);
+
+
     const statusOptions = ['Aguardando', 'Atrasado', 'Atendido', 'Cancelado'];
-    console.log(appointmentData);
 
     const handleAgendar = () => {
-        if (!nomeCliente || !telefoneCliente || !data || !horario || !selectedService || !selectedStatus) {
+        if (!nomeCliente || !telefoneCliente || !data || !horario || !selectedServicesInAppointment || !selectedStatus) {
             console.log('Por favor, preencha todos os campos.');
-            console.log("Dados att:" + nomeCliente, telefoneCliente, data, horario, selectedService, selectedStatus)
+            console.log("Dados att:" + nomeCliente, telefoneCliente, data, horario, selectedServices, selectedStatus);
             return;
         }
 
         const sql = `
             UPDATE Agendamento
-            SET Nome = ?, Telefone = ?, Data = ?, Horario = ?, Servicos = ?, Status = ?
+            SET Nome = ?, Telefone = ?, Data = ?, Horario = ?, Servicos = ?, Status = ?, ColaboradorNome = ?
             WHERE ID = ?
         `;
 
-        const params = [nomeCliente, telefoneCliente, data, horario, selectedService, selectedStatus, appointmentData.ID];
+        const servicosString = Array.isArray(selectedServicesInAppointment)
+            ? selectedServicesInAppointment.join(', ')
+            : '';
+
+        const colaboradoresString = Array.isArray(selectedColaboradorInAppointment)
+            ? JSON.stringify(selectedColaboradorInAppointment)
+            : selectedColaboradorInAppointment;
+
+        const params = [nomeCliente, telefoneCliente, data, horario, servicosString, selectedStatus, colaboradoresString, appointmentData.ID];
 
         db.transaction((tx) => {
             tx.executeSql(
@@ -78,8 +88,8 @@ const EditarAgendamento = () => {
                                 }
                             }
 
-                            setServiceOptionss(options); // Atualize o estado com os dados do serviço
-                            console.log(serviceOptionss)
+                            setServiceOptions(options); // Atualize o estado com os dados do serviço
+                            console.log(serviceOptions)
                         },
                         (_, erro) => {
                             console.error('Erro ao recuperar dados:', erro);
@@ -95,25 +105,149 @@ const EditarAgendamento = () => {
         buscarDados();
     }, []);
 
+    useEffect(() => {
+        async function buscarDados() {
+            db.transaction(
+                (tx) => {
+                    tx.executeSql(
+                        'SELECT * FROM Colaboradores',  // Replace with your actual table name for collaborators
+                        [],
+                        (_, resultadoColaborador) => {
+                            let colaboradorOptions = [];
+                            if (resultadoColaborador.rows.length > 0) {
+                                for (let i = 0; i < resultadoColaborador.rows.length; i++) {
+                                    const registroColaborador = resultadoColaborador.rows.item(i);
+                                    colaboradorOptions.push(registroColaborador["Nome"]);
+                                }
+                            }
+                            setColaborador(colaboradorOptions);
+                        },
+                        (_, erro) => {
+                            console.error('Erro ao recuperar dados de colaboradores:', erro);
+                        }
+                    );
+
+                },
+                (erro) => {
+                    console.error('Erro na transacao', erro);
+                }
+            );
+        }
+
+        buscarDados();
+    }, []);
+
+    useEffect(() => {
+        // Set selected services in appointment
+        setSelectedServicesInAppointment((appointmentData.Servicos || '').split(', '));
+    }, [appointmentData.Servicos]);
+
+    useEffect(() => {
+        setSelectedColaboradorInAppointment((appointmentData.ColaboradorNome) || []);
+    }, [appointmentData.ColaboradorNome]);
+
     const handleVoltar = () => {
         navigation.navigate('MainMenu')
     }
 
-    const handleCopiar = async () => {
-        try {
-            const dadosString =
-                "Olá " + nomeCliente + ", tudo bem com você?" +
-                "\nNão se esqueça que você tem um agendamento na " + name + " na seguinte data: \nData: " + data + "\nHorário: " + horario + "\n\nObrigado pela preferência!";
+    const handleServiceToggle = (service) => {
+        const isSelected = selectedServicesInAppointment.includes(service);
 
-            Clipboard.setString(dadosString);
-            console.log('Dados copiados:', dadosString);
-            ToastAndroid.show('Dados copiados para a área de transferência!', ToastAndroid.SHORT);
-        } catch (error) {
-            console.error('Erro ao definir a área de transferência:', error);
-            ToastAndroid.show('Erro ao copiar dados!', ToastAndroid.SHORT);
+        // Toggle the selection state of the service
+        if (isSelected) {
+            setSelectedServicesInAppointment((prevSelectedServices) =>
+                prevSelectedServices.filter((selected) => selected !== service)
+            );
+        } else {
+            setSelectedServicesInAppointment((prevSelectedServices) => [
+                ...prevSelectedServices,
+                service,
+            ]);
         }
     };
 
+
+    const handleColaboradorToggle = (colaborator) => {
+        const isSelected = selectedColaborador.includes(colaborator);
+
+        // If the current collaborator is already selected, do nothing
+        if (isSelected) {
+            return;
+        }
+
+        // Deselect all previously selected collaborators
+        const updatedSelectedColaborador = selectedColaborador.filter(
+            (selected) => !colaborator.includes(selected)
+        );
+
+        // Select the current collaborator
+        const newSelectedColaborador = [...updatedSelectedColaborador, colaborator];
+        setSelectedColaborador(newSelectedColaborador);
+
+        // Save as a JSON string or as an array, depending on your data model
+        // If you need to store it as a JSON string:
+        setSelectedColaboradorInAppointment(JSON.stringify(newSelectedColaborador));
+        // If you need to store it as an array:
+        // setSelectedColaboradorInAppointment(newSelectedColaborador);
+        console.log(newSelectedColaborador);
+    };
+
+    const handleCardServicos = () => {
+        if (cardAberto === true) {
+            setCardAberto(false);
+        } else {
+            setCardAberto(true);
+        }
+    }
+
+    const handleCardColaboradores = () => {
+        if (cardColaboradorAberto === true) {
+            setCardColaboradorAberto(false);
+        } else {
+            setCardColaboradorAberto(true);
+        }
+    }
+
+    const calcularNovoStatus = (novaData, novoHorario) => {
+        const [day, month, year] = novaData.split('/');
+        const [hours, minutes] = novoHorario.split(':');
+        const agendamentoDate = new Date(`${year}-${month}-${day}T${hours}:${minutes}`);
+    
+        const currentDate = new Date();
+    
+        // Compare only the time part of the dates
+        const agendamentoTime = agendamentoDate.getHours() * 60 + agendamentoDate.getMinutes();
+        const currentTime = currentDate.getHours() * 60 + currentDate.getMinutes();
+    
+        let novoStatus;
+    
+        if (agendamentoDate > currentDate) {
+            novoStatus = "Aguardando";
+        } else if (currentTime - agendamentoTime <= 5) {
+            // Assuming a 5-minute grace period after the scheduled time
+            novoStatus = "Atrasado";
+        } else {
+            novoStatus = "Atrasado";
+        }
+    
+        return novoStatus;
+    };
+
+    const handleDataChange = (novaData) => {
+        setData(novaData);
+
+        // Se quiser atualizar automaticamente o status ao mudar a data
+        const novoStatus = calcularNovoStatus(novaData, horario);
+        setSelectedStatus(novoStatus);
+    };
+
+    const handleHorarioChange = (novoHorario) => {
+        setHorario(novoHorario);
+
+        // Se quiser atualizar automaticamente o status ao mudar o horário
+        const novoStatus = calcularNovoStatus(data, novoHorario);
+        setSelectedStatus(novoStatus);
+    };
 
 
     return (
@@ -143,7 +277,12 @@ const EditarAgendamento = () => {
                         style={styles.input}
                         placeholder="Data do agendamento"
                         value={data}
-                        onChangeText={(text) => setData(text)} />
+                        onChangeText={(text) => {
+                            setData(text);
+                            // Mova a chamada da função para depois da atualização do estado
+                            handleDataChange(text);
+                        }}
+                    />
                 </View>
 
                 <Text style={styles.label}>Horário:</Text>
@@ -152,22 +291,58 @@ const EditarAgendamento = () => {
                         style={styles.input}
                         placeholder="Horário do agendamento"
                         value={horario}
-                        onChangeText={(text) => setHorario(text)} />
+                        onChangeText={(text) => {
+                            setHorario(text);
+                            // Mova a chamada da função para depois da atualização do estado
+                            handleHorarioChange(text);
+                        }}
+                    />
                 </View>
 
-                <Text style={styles.label}>Serviços:</Text>
-                <View style={styles.pickerContainer}>
-                    <Picker
-                        style={styles.Picker}
-                        selectedValue={selectedService}
-                        onValueChange={(itemValue) => setSelectedService(itemValue)}
-                    >
-                        <Picker.Item label="Selecione um serviço" value="" />
-                        {serviceOptionss.map((service, index) => (
-                            <Picker.Item key={index} label={service} value={service} />
-                        ))}
-                    </Picker>
-                </View>
+                <TouchableOpacity style={styles.button} onPress={() => handleCardServicos()}>
+                    <Text style={styles.buttonText}>Serviços</Text>
+                </TouchableOpacity>
+                {cardAberto && (
+                    <View style={styles.card}>
+                        <Text style={styles.cardHeader}>Selecionar serviços</Text>
+                        {/* Render service options with checkboxes */}
+                        <View style={styles.containerCheck}>
+                            {serviceOptions.map((service, index) => (
+                                <View key={index} style={styles.checkboxContainer}>
+                                    <CheckBox
+                                        title={service}
+                                        checked={selectedServicesInAppointment.includes(service)}
+                                        onPress={() => handleServiceToggle(service)}
+                                        containerStyle={styles.checkbox} // Apply the checkbox styles
+                                    />
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                )}
+
+                <TouchableOpacity style={styles.button} onPress={() => handleCardColaboradores()}>
+                    <Text style={styles.buttonText}>Colaborador</Text>
+                </TouchableOpacity>
+                {cardColaboradorAberto && (
+                    <View style={styles.card}>
+                        <Text style={styles.cardHeader}>Selecionar colaborador</Text>
+
+                        {/* Renderizar opções de serviços */}
+                        <View style={styles.containerCheck}>
+                            {colaborador.map((colaborator, index) => (
+                                <View key={index} style={styles.checkboxContainer}>
+                                    <CheckBox
+                                        title={colaborator}
+                                        checked={selectedColaboradorInAppointment.includes(colaborator)}
+                                        onPress={() => handleColaboradorToggle(colaborator)}
+                                        containerStyle={styles.checkbox} // Apply the checkbox styles
+                                    />
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                )}
 
                 <Text style={styles.label}>Status:</Text>
                 <View style={styles.pickerContainer}>
@@ -185,10 +360,6 @@ const EditarAgendamento = () => {
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity style={styles.button}>
                         <Text onPress={handleAgendar} style={styles.buttonText}>Atualizar</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.buttonGray} onPress={handleCopiar}>
-                        <Text style={styles.buttonText}>Copiar dados</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.buttonRed}>
@@ -221,10 +392,32 @@ const styles = StyleSheet.create({
     textCadastradoRed: {
         color: 'red'
     },
+    cardHeader: {
+        color: Style.color,
+        fontWeight: 'bold',
+        alignSelf: 'center'
+    },
     inputContainer: {
         flexDirection: 'row',
         alignSelf: 'center',
         marginBottom: 15,
+    },
+    checkboxContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 5,
+    },
+    checkbox: {
+        marginLeft: 15,
+        width: '90%'
+    },
+    containerCheck: {
+        backgroundColor: '#ccc',
+        paddingVertical: 10,
+        borderRadius: 10,
+        marginBottom: 10,
+        width: '80%',
+        alignSelf: 'center',
     },
     input: {
         width: '60%',

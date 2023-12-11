@@ -19,7 +19,7 @@ const NavBar = () => {
             toValue: isMenuOpen ? 0 : 1,
             duration: 300,
             easing: Easing.ease,
-            useNativeDriver: true,
+            useNativeDriver: false, // Use JavaScript driver
         }).start(() => {
             console.log('Animation completed. isMenuOpen:', isMenuOpen);
         });
@@ -63,7 +63,7 @@ const NavBar = () => {
 
     return (
         <View style={styles.container}>
-            <Animated.View style={[styles.navBar, { transform: [{ translateX }], zIndex }]}>
+            <Animated.View style={[styles.navBar, { transform: [{ translateX }], zIndex }, {perspective: 1000}]}>
                 <TouchableOpacity style={styles.navButton} onPress={toggleMenu}>
                     <Ionicons name="menu" size={24} color="black" />
                 </TouchableOpacity>
