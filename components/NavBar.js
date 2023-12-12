@@ -81,9 +81,6 @@ const NavBar = () => {
                     <TouchableOpacity style={styles.menuOption} onPress={goToMeuPerfil}>
                         <Text>Meu Perfil</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.menuOption} onPress={() => console.log('Temas')}>
-                        <Text>Temas</Text>
-                    </TouchableOpacity>
                     <TouchableOpacity style={styles.menuOption} onPress={goToColaboradores}>
                         <Text>Colaboradores</Text>
                     </TouchableOpacity>

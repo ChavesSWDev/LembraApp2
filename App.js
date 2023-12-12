@@ -71,82 +71,84 @@ export default function App() {
   }
 
   return (
-      <RootSiblingParent>
-        <NavigationContainer>
-          <Stack.Navigator>
-            {/* <Stack.Screen name='form'>
+    <RootSiblingParent>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{
+          headerShown: false, // Oculta o cabeçalho padrão
+        }} >
+          {/* <Stack.Screen name='form'>
         {props => <Form/>}
       </Stack.Screen> */}
-            <Stack.Screen name='BemVindo'>
-              {props => <BemVindo />}
-            </Stack.Screen>
+          <Stack.Screen name='BemVindo'>
+            {props => <BemVindo />}
+          </Stack.Screen>
 
-            <Stack.Screen name="Tutorial">
-              {props => <Tutorial {...props} moverParaLixeira={moverParaLixeira} setMoverParaLixeira={setMoverParaLixeira} notas={notas} setNotas={setNotas} nota={nota} setNota={setNota} />}
-            </Stack.Screen>
+          <Stack.Screen name="Tutorial">
+            {props => <Tutorial {...props} moverParaLixeira={moverParaLixeira} setMoverParaLixeira={setMoverParaLixeira} notas={notas} setNotas={setNotas} nota={nota} setNota={setNota} />}
+          </Stack.Screen>
 
-            <Stack.Screen name='Notas'>
-              {props => <Notas {...props} moverParaLixeira={moverParaLixeira} setMoverParaLixeira={setMoverParaLixeira} notas={notas} setNotas={setNotas} nota={nota} setNota={setNota} />}
-            </Stack.Screen>
+          <Stack.Screen name='Notas'>
+            {props => <Notas {...props} moverParaLixeira={moverParaLixeira} setMoverParaLixeira={setMoverParaLixeira} notas={notas} setNotas={setNotas} nota={nota} setNota={setNota} />}
+          </Stack.Screen>
 
-            <Stack.Screen name='AddNota'>
-              {props => <AddNota {...props} nota={nota} setNota={setNota} handleNota={handleNota} />}
-            </Stack.Screen>
+          <Stack.Screen name='AddNota'>
+            {props => <AddNota {...props} nota={nota} setNota={setNota} handleNota={handleNota} />}
+          </Stack.Screen>
 
-            <Stack.Screen name="DeletarNota">
-              {props => <DeletarNota {...props} moverParaLixeira={moverParaLixeira} setMoverParaLixeira={setMoverParaLixeira} notas={notas} setNotas={setNotas} />}
-            </Stack.Screen>
+          <Stack.Screen name="DeletarNota">
+            {props => <DeletarNota {...props} moverParaLixeira={moverParaLixeira} setMoverParaLixeira={setMoverParaLixeira} notas={notas} setNotas={setNotas} />}
+          </Stack.Screen>
 
-            <Stack.Screen name="EditarNota">
-              {props => <EditarNota {...props} notas={notas} setNotas={setNotas} />}
-            </Stack.Screen>
+          <Stack.Screen name="EditarNota">
+            {props => <EditarNota {...props} notas={notas} setNotas={setNotas} />}
+          </Stack.Screen>
 
-            <Stack.Screen name="CadastroInicial">
-              {props => <CadastroInicial />}
-            </Stack.Screen>
+          <Stack.Screen name="CadastroInicial">
+            {props => <CadastroInicial />}
+          </Stack.Screen>
 
-            <Stack.Screen name="MainMenu">
-              {props => <MainMenu />}
-            </Stack.Screen>
+          <Stack.Screen name="MainMenu">
+            {props => <MainMenu />}
+          </Stack.Screen>
 
-            <Stack.Screen name="Agendar">
-              {props => <Agendar />}
-            </Stack.Screen>
+          <Stack.Screen name="Agendar">
+            {props => <Agendar />}
+          </Stack.Screen>
 
-            <Stack.Screen name="EditarAgendamento">
-              {props => <EditarAgendamento />}
-            </Stack.Screen>
+          <Stack.Screen name="EditarAgendamento">
+            {props => <EditarAgendamento />}
+          </Stack.Screen>
 
-            <Stack.Screen name="MeuPerfil">
-              {props => <MeuPerfil />}
-            </Stack.Screen>
+          <Stack.Screen name="MeuPerfil">
+            {props => <MeuPerfil />}
+          </Stack.Screen>
 
-            <Stack.Screen name="Opcoes">
-              {props => <Opcoes />}
-            </Stack.Screen>
+          <Stack.Screen name="Opcoes">
+            {props => <Opcoes />}
+          </Stack.Screen>
 
-            <Stack.Screen name="RestaurarSistema">
-              {props => <RestaurarSistema />}
-            </Stack.Screen>
+          <Stack.Screen name="RestaurarSistema">
+            {props => <RestaurarSistema />}
+          </Stack.Screen>
 
-            <Stack.Screen name="FazerBackup">
-              {props => <FazerBackup />}
-            </Stack.Screen>
+          <Stack.Screen name="FazerBackup">
+            {props => <FazerBackup />}
+          </Stack.Screen>
 
-            <Stack.Screen name="RestaurarBackup">
-              {props => <RestaurarBackup />}
-            </Stack.Screen>
+          <Stack.Screen name="RestaurarBackup">
+            {props => <RestaurarBackup />}
+          </Stack.Screen>
 
-            <Stack.Screen name="Colaboradores">
-              {props => <Colaboradores />}
-            </Stack.Screen>
+          <Stack.Screen name="Colaboradores">
+            {props => <Colaboradores />}
+          </Stack.Screen>
 
-            <Stack.Screen name="AddColaborador">
-              {props => <AddColaborador />}
-            </Stack.Screen>
-          </Stack.Navigator>
-        </NavigationContainer>
-      </RootSiblingParent>
+          <Stack.Screen name="AddColaborador">
+            {props => <AddColaborador />}
+          </Stack.Screen>
+        </Stack.Navigator>
+      </NavigationContainer>
+    </RootSiblingParent>
   );
 }
 
