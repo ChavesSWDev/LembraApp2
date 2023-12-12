@@ -355,9 +355,9 @@ function CadastroInicial() {
                 </TouchableOpacity>
             </View>
 
-            <Text style={styles.textCadastrado}>
+            {/* <Text style={styles.textCadastrado}>
                 Já tem o seu negócio? Clique <Text onPress={handleIr} style={styles.textCadastradoRed}>aqui</Text>
-            </Text>
+            </Text> */}
         </ScrollView>
     );
 }
