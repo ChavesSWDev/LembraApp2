@@ -102,6 +102,7 @@ const MainMenu = () => {
                                 setName(registro["Nome"]);
                                 setCnpj(registro["CNPJ"]);
                                 setRamo(registro["Ramo"]);
+                                setLogotipoPath(registro["LogotipoPath"]); // Adicione esta linha
                                 console.log(registro);
                             }
                         }
@@ -131,6 +132,10 @@ const MainMenu = () => {
     useEffect(() => {
         fetchAgendamentos();
     }, []);
+
+    const selectLogo = (defaultLogo) => {
+        return logotipoPath ? { uri: logotipoPath } : defaultLogo;
+    };
 
     const fetchAgendamentos = () => {
         db.transaction((tx) => {
@@ -361,16 +366,16 @@ const MainMenu = () => {
         // Função para verificar e atualizar status dos agendamentos
         const verificarAgendamentos = async () => {
             const now = new Date();
-    
+
             for (const appointment of agendamentos) {
                 const { Data, Horario, Status, ID } = appointment;
-    
+
                 const appointmentDateTime = new Date(`${Data} ${Horario}`);
                 const currentDateTime = new Date();
-    
+
                 // Verifica se a diferença entre o horário do agendamento e o horário atual é maior que 0
                 const diffInMinutes = (appointmentDateTime - currentDateTime) / (1000 * 60);
-                
+
                 if (diffInMinutes < 0 && Status !== 'Atendido') {
                     // Atualiza o status para "Atrasado"
                     await new Promise((resolve) => {
@@ -389,18 +394,18 @@ const MainMenu = () => {
                             );
                         });
                     });
-    
+
                     // Atualiza o estado local dos agendamentos
                     await fetchAgendamentos();
                 }
             }
         };
-    
+
         // Execute a verificação a cada 60 segundos
         const intervalId = setInterval(async () => {
             await verificarAgendamentos();
         }, 10000);
-    
+
         return () => clearInterval(intervalId);
     }, [agendamentos]);
 
@@ -409,7 +414,8 @@ const MainMenu = () => {
             <NavBar />
             <ScrollView>
                 <View style={styles.container}>
-                    <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center' }} />
+                    <Image source={selectLogo(require('default'))} style={{ width: 150, height: 150, alignSelf: 'center' }} />
+
                     <View>
                         <TouchableOpacity
                             style={styles.button}

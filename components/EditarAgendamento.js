@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { ScrollView, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, View } from 'react-native'
+import { Alert, ScrollView, StyleSheet, Text, TextInput, ToastAndroid, TouchableOpacity, View } from 'react-native'
 import * as Style from '../assets/styles';
 import NavBar from './NavBar';
 import { Picker } from '@react-native-picker/picker';
@@ -37,36 +37,83 @@ const EditarAgendamento = () => {
             return;
         }
 
-        const sql = `
-            UPDATE Agendamento
-            SET Nome = ?, Telefone = ?, Data = ?, Horario = ?, Servicos = ?, Status = ?, ColaboradorNome = ?
-            WHERE ID = ?
+        const [day, month, year] = data.split('/');
+        const parsedDay = parseInt(day, 10);
+        const parsedMonth = parseInt(month, 10);
+        const parsedYear = parseInt(year, 10);
+
+        if (
+            isNaN(parsedDay) || isNaN(parsedMonth) || isNaN(parsedYear) ||
+            parsedDay < 1 || parsedDay > 31 ||
+            parsedMonth < 1 || parsedMonth > 12 ||
+            parsedYear < 1900 || parsedYear > new Date().getFullYear()
+        ) {
+            console.log('Data inválida.');
+            Alert.alert('Aviso', 'Por favor, insira uma data válida.');
+            return;
+        }
+
+        const horarioRegex = /^(0[1-9]|1\d|2[0-4]):([0-5]\d)$/;
+        if (!horario.match(horarioRegex)) {
+            console.log('Horário inválido.');
+            Alert.alert('Aviso', 'Por favor, insira um horário válido.');
+            return;
+        }
+
+        // Verifica se já existe um agendamento para a mesma data e horário
+        const checkExistingSql = `
+            SELECT COUNT(*) as count
+            FROM Agendamento
+            WHERE Data = ? AND Horario = ?
         `;
 
-        const servicosString = Array.isArray(selectedServicesInAppointment)
-            ? selectedServicesInAppointment.join(', ')
-            : '';
-
-        const colaboradoresString = Array.isArray(selectedColaboradorInAppointment)
-            ? JSON.stringify(selectedColaboradorInAppointment)
-            : selectedColaboradorInAppointment;
-
-        const params = [nomeCliente, telefoneCliente, data, horario, servicosString, selectedStatus, colaboradoresString, appointmentData.ID];
+        const checkExistingParams = [data, horario];
 
         db.transaction((tx) => {
             tx.executeSql(
-                sql,
-                params,
+                checkExistingSql,
+                checkExistingParams,
                 (_, result) => {
-                    console.log('Dado atualizado com sucesso!', result);
-                },
-                (_, error) => {
-                    console.error('Erro ao atualizar os dados!', error);
-                }
-            );
-        });
+                    const count = result.rows.item(0).count;
 
-        navigation.navigate('MainMenu');
+                    if (count > 0 && selectedStatus != "Cancelado" && selectedStatus !== "Atendido") {
+                        console.log('Já existe um agendamento para esta data e horário.');
+                        Alert.alert('Aviso', 'Já existe um agendamento para esta data e horário.');
+                    } else {
+                        const sql = `
+                        UPDATE Agendamento
+                        SET Nome = ?, Telefone = ?, Data = ?, Horario = ?, Servicos = ?, Status = ?, ColaboradorNome = ?
+                        WHERE ID = ?
+                    `;
+
+                        const servicosString = Array.isArray(selectedServicesInAppointment)
+                            ? selectedServicesInAppointment.join(', ')
+                            : '';
+
+                        const colaboradoresString = Array.isArray(selectedColaboradorInAppointment)
+                            ? JSON.stringify(selectedColaboradorInAppointment)
+                            : selectedColaboradorInAppointment;
+
+                        const params = [nomeCliente, telefoneCliente, data, horario, servicosString, selectedStatus, colaboradoresString, appointmentData.ID];
+
+                        db.transaction((tx) => {
+                            tx.executeSql(
+                                sql,
+                                params,
+                                (_, result) => {
+                                    console.log('Dado atualizado com sucesso!', result);
+                                },
+                                (_, error) => {
+                                    console.error('Erro ao atualizar os dados!', error);
+                                }
+                            );
+                        });
+
+                        navigation.navigate('MainMenu');
+                    }
+                }
+            )
+        })
     };
 
     useEffect(() => {
@@ -212,15 +259,15 @@ const EditarAgendamento = () => {
         const [day, month, year] = novaData.split('/');
         const [hours, minutes] = novoHorario.split(':');
         const agendamentoDate = new Date(`${year}-${month}-${day}T${hours}:${minutes}`);
-    
+
         const currentDate = new Date();
-    
+
         // Compare only the time part of the dates
         const agendamentoTime = agendamentoDate.getHours() * 60 + agendamentoDate.getMinutes();
         const currentTime = currentDate.getHours() * 60 + currentDate.getMinutes();
-    
+
         let novoStatus;
-    
+
         if (agendamentoDate > currentDate) {
             novoStatus = "Aguardando";
         } else if (currentTime - agendamentoTime <= 5) {
@@ -229,7 +276,7 @@ const EditarAgendamento = () => {
         } else {
             novoStatus = "Atrasado";
         }
-    
+
         return novoStatus;
     };
 
@@ -249,6 +296,89 @@ const EditarAgendamento = () => {
         setSelectedStatus(novoStatus);
     };
 
+    //dados dos inputs
+
+    const handleNomeClienteChange = (text) => {
+        // Remove caracteres indesejados usando uma expressão regular
+        const newText = text.replace(/[^a-zA-ZÀ-ÿ\s~´`]/g, '');
+
+        // Atualiza o estado apenas se o texto for alterado
+        if (newText !== text) {
+            setNomeCliente(newText);
+        } else {
+            // Se o texto não for alterado, mantenha o valor atual
+            setNomeCliente(text);
+        }
+    }
+
+    const formatarTelefone = (text) => {
+        // Remove caracteres não numéricos
+        const cleanedText = text.replace(/[^0-9]/g, '');
+
+        // Limita o comprimento máximo para 11 caracteres
+        const truncatedText = cleanedText.slice(0, 11);
+
+        // Aplica a máscara (XX) XXXXX-XXXX
+        let formattedText = '';
+        for (let i = 0; i < truncatedText.length; i++) {
+            if (i === 0) formattedText += `(${truncatedText[i]}`;
+            else if (i === 2) formattedText += `) ${truncatedText[i]}`;
+            else if (i === 7) formattedText += `-${truncatedText[i]}`;
+            else formattedText += truncatedText[i];
+        }
+
+        return formattedText;
+    };
+
+    const handleTelefoneClienteChange = (text) => {
+        const formattedText = formatarTelefone(text);
+        setTelefoneCliente(formattedText);
+    };
+
+    const formatarData = (text) => {
+        // Remove caracteres não numéricos
+        const cleanedText = text.replace(/[^0-9]/g, '');
+
+        // Limita o comprimento máximo para 8 caracteres (DD/MM/YYYY)
+        const truncatedText = cleanedText.slice(0, 8);
+
+        // Adiciona a máscara DD/MM/YYYY
+        let formattedText = '';
+        for (let i = 0; i < truncatedText.length; i++) {
+            if (i === 2 || i === 4) formattedText += '/';
+            formattedText += truncatedText[i];
+        }
+
+        return formattedText;
+    };
+
+    const handleDataChangeInput = (text) => {
+        const formattedText = formatarData(text);
+        setData(formattedText)
+    };
+
+    const formatarHorario = (text) => {
+        // Remove caracteres não numéricos
+        const cleanedText = text.replace(/[^0-9]/g, '');
+
+        // Limita o comprimento máximo para 4 caracteres (HHmm)
+        const truncatedText = cleanedText.slice(0, 4);
+
+        // Adiciona a máscara HH:mm
+        let formattedText = '';
+        for (let i = 0; i < truncatedText.length; i++) {
+            if (i === 2) formattedText += ':';
+            formattedText += truncatedText[i];
+        }
+
+        return formattedText;
+    };
+
+    const handleHorarioChangeInput = (text) => {
+        const formattedText = formatarHorario(text);
+        setHorario(formattedText);
+    };
+
 
     return (
         <ScrollView>
@@ -259,7 +389,7 @@ const EditarAgendamento = () => {
                         style={styles.input}
                         placeholder="Nome do cliente"
                         value={nomeCliente}
-                        onChangeText={(text) => setNomeCliente(text)} />
+                        onChangeText={handleNomeClienteChange} />
                 </View>
 
                 <Text style={styles.label}>Telefone:</Text>
@@ -268,7 +398,10 @@ const EditarAgendamento = () => {
                         style={styles.input}
                         placeholder="Telefone do cliente"
                         value={telefoneCliente}
-                        onChangeText={(text) => setTelefoneCliente(text)} />
+                        onChangeText={handleTelefoneClienteChange}
+                        keyboardType="phone-pad"
+                        maxLength={15} // (XX) XXXXX-XXXX possui 14 caracteres
+                    />
                 </View>
 
                 <Text style={styles.label}>Data:</Text>
@@ -277,11 +410,9 @@ const EditarAgendamento = () => {
                         style={styles.input}
                         placeholder="Data do agendamento"
                         value={data}
-                        onChangeText={(text) => {
-                            setData(text);
-                            // Mova a chamada da função para depois da atualização do estado
-                            handleDataChange(text);
-                        }}
+                        onChangeText={handleDataChangeInput}
+                        keyboardType="numeric"
+                        maxLength={10}
                     />
                 </View>
 
@@ -291,11 +422,9 @@ const EditarAgendamento = () => {
                         style={styles.input}
                         placeholder="Horário do agendamento"
                         value={horario}
-                        onChangeText={(text) => {
-                            setHorario(text);
-                            // Mova a chamada da função para depois da atualização do estado
-                            handleHorarioChange(text);
-                        }}
+                        onChangeText={handleHorarioChangeInput}
+                        keyboardType="numeric"
+                        maxLength={5} // Limita o comprimento máximo para 5 caracteres (HH:mm)
                     />
                 </View>
 

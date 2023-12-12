@@ -22,6 +22,7 @@ function CadastroInicial() {
     const [relatedServices, setRelatedServices] = useState([]);
     const [selectedRelatedService, setSelectedRelatedService] = useState('');
     const [base64Logotipo, setBase64Logotipo] = useState('');
+    const [logoTipoPath, setLogoTipoPath] = useState('');
     const [selectedServices, setSelectedServices] = useState([]);
     const [cardAberto, setCardAberto] = useState(false);
     print(CadastroInicial);
@@ -90,6 +91,10 @@ function CadastroInicial() {
         if (!result.cancelled && result.uri) {
             // Atualize o estado 'logotipo' com a URI da imagem selecionada
             setLogotipo(result.uri);
+
+            // Salve o caminho da imagem no banco de dados
+            const logotipoPath = result.uri;
+            setLogotipoPath(logotipoPath);
 
             // Converta a imagem para uma string base64
             const base64String = await convertImageToBase64(result.uri);
@@ -168,7 +173,7 @@ function CadastroInicial() {
                 console.log(nomeEstabelecimento, cnpj, selectedService)
                 // Se não houver registros, tenta inserir o novo registro
                 const sql = `INSERT INTO Estabelecimento (Nome, CNPJ, Ramo, Logotipo, Tuto) VALUES (?, ?, ?, ?, ?)`;
-                const params = [nomeEstabelecimento, cnpj, selectedService, base64Logotipo, 1];
+                const params = [nomeEstabelecimento, cnpj, selectedService, logoTipoPath, 1];
 
                 db.transaction(async (tx) => {
                     tx.executeSql(

@@ -9,7 +9,7 @@ db.transaction((tx) => {
       Nome TEXT NOT NULL,
       CNPJ INTEGER NOT NULL,
       Ramo TEXT,
-      Logotipo BLOB NOT NULL,
+      Logotipo TEXT NOT NULL,
       Tuto INTEGER NOT NULL
     );`,
     [],
