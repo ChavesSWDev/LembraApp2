@@ -14,6 +14,7 @@ import { CheckBox } from 'react-native-elements';
 
 function CadastroInicial() {
     const [nomeEstabelecimento, setNomeEstabelecimento] = useState('');
+
     const [cnpj, setCnpj] = useState('');
     const [logotipo, setLogotipo] = useState('');
     const [ramo, setRamo] = useState('');
@@ -88,21 +89,19 @@ function CadastroInicial() {
             aspect: [4, 3],
         });
 
-        if (!result.cancelled && result.uri) {
-            // Atualize o estado 'logotipo' com a URI da imagem selecionada
-            setLogotipo(result.uri);
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+            // Update your logic to handle the assets array
+            const firstAsset = result.assets[0];
+            setLogotipo(firstAsset.uri);
 
-            // Salve o caminho da imagem no banco de dados
-            const logotipoPath = result.uri;
-            setLogotipoPath(logotipoPath);
+            const logotipoPath = firstAsset.uri;
+            setLogoTipoPath(logotipoPath);
 
-            // Converta a imagem para uma string base64
-            const base64String = await convertImageToBase64(result.uri);
-
-            // Atualize o estado 'base64Logotipo' com a string base64
+            const base64String = await convertImageToBase64(firstAsset.uri);
             setBase64Logotipo(base64String);
         }
     }
+
 
     const getRelatedServices = (selectedService) => {
         switch (selectedService) {
@@ -258,6 +257,27 @@ function CadastroInicial() {
         }
     };
 
+    const formatCnpj = (input) => {
+        // Remove caracteres não numéricos
+        const numericValue = input.replace(/\D/g, '');
+
+        // Limita o número de caracteres a 14
+        const formattedValue = numericValue.slice(0, 14);
+
+        // Aplica a máscara
+        const maskedCnpj = formattedValue.replace(
+            /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
+            '$1.$2.$3/$4-$5'
+        );
+
+        return maskedCnpj;
+    };
+
+    const handleCnpjChange = (text) => {
+        const formattedCnpj = formatCnpj(text);
+        setCnpj(formattedCnpj);
+    };
+
     return (
         <ScrollView style={styles.container}>
 
@@ -277,7 +297,9 @@ function CadastroInicial() {
                     style={styles.input}
                     placeholder="Digite o CNPJ"
                     value={cnpj}
-                    onChangeText={(text) => setCnpj(text)}
+                    onChangeText={handleCnpjChange}
+                    keyboardType="numeric"
+                    maxLength={18} // Limita o número de caracteres a 18 (com máscara)
                 />
             </View>
 

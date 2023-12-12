@@ -7,6 +7,7 @@ import * as Style from '../assets/styles';
 import { selectLogo } from '../utils/pega-imagem';
 import NavBar from './NavBar';
 import db from './BancoLembraAi';
+import { CheckBox } from 'react-native-elements';
 
 async function getEstabelecimentoLogo(id) {
 
@@ -34,47 +35,203 @@ const MeuPerfil = () => {
         CNPJ: '',
         Servicos: '',
         Logotipo: '',
+        ID: '',
     });
+    const [cardAberto, setCardAberto] = useState(false);
+    const [selectedService, setSelectedService] = useState('');
     const [isNameEditing, setNameEditing] = useState(false);
     const [name, setName] = useState(dados.Nome);
     const [isCnpjEditing, setCnpjEditing] = useState(false);
     const [cnpj, setCnpj] = useState(dados.CNPJ);
     const [isRamoEditing, setRamoEditing] = useState(false);
     const [ramo, setRamo] = useState(dados.Servicos);
+    const [logoTipoPath, setLogoTipoPath] = useState('');
     const [originalName, setOriginalName] = useState(name);
     const [originalCnpj, setOriginalCnpj] = useState(cnpj);
     const [originalRamo, setOriginalRamo] = useState(ramo);
     const [agendamentos, setAgendamentos] = useState([]);
+    const [idEstabelecimento, setIdEstabelecimento] = useState('');
+    const serviceOptions = [
+        'Salão de Beleza',
+        'Oficina Mecânica',
+        'Barbeiro',
+    ];
+
+    const relatedServiceSalaoOptions = [
+        'Corte de cabelo',
+        'Manicure e pedicure',
+        'Maquiagem',
+        'Tratamentos para cabelos',
+        'Depilação'
+    ]
+
+    const relatedServiceOficinaOptions = [
+        'Troca de óleo',
+        'Troca de pneus',
+        'Revisão',
+        'Consertos',
+        'Instalação de acessórios',
+    ]
+
+    const relatedServiceBarbeiroOptions = [
+        'Corte de cabelo',
+        'Barba',
+        'Bigode',
+        'Depilação facial',
+        'Hidratação capilar',
+    ]
+
+
+
+    const executeSql = async (sql, params) => {
+        console.log('Executing SQL:', sql);
+        console.log('Parameters:', params);
+
+        return new Promise((resolve, reject) => {
+            db.transaction((tx) => {
+                tx.executeSql(sql, params, (_, result) => {
+                    console.log('Query executed successfully:', result);
+                    resolve(result);
+                }, (_, error) => {
+                    console.error('Error executing the query:', error);
+                    reject(error);
+                });
+            });
+        });
+    };
+
+    const handleSaveChanges = () => {
+        db.transaction(async (tx) => {
+            try {
+                // Update the Estabelecimento table with the edited data
+                await tx.executeSql(
+                    'UPDATE Estabelecimento SET Nome=?, CNPJ=?, Ramo=? WHERE ID=?',
+                    [name, cnpj, ramo, 1]
+                );
+
+                // Commit the transaction
+                await tx.executeSql('COMMIT;');
+            } catch (error) {
+                // Handle errors
+                console.error('Error saving changes:', error);
+                await tx.executeSql('ROLLBACK;');
+            }
+        });
+    };
+
+
+
+    const insertServices = async () => {
+        // Obtém os serviços relacionados ao ramo selecionado
+        const relatedServices = getRelatedServices(ramo);
+
+        // Cria a query SQL para inserir ou atualizar um serviço
+        const insertSql = 'INSERT INTO Servico (Nome, Ramo, EstabelecimentoID) VALUES (?, ?, ?)';
+
+        // Deleta os dados existentes na tabela Servico
+        await executeSql('DELETE FROM Servico');
+
+        // Insere os novos serviços na tabela Servico
+        for (let i = 0; i < relatedServices.length; i++) {
+            const serviceName = relatedServices[i];
+            const params = [serviceName, ramo, 1];
+
+            try {
+                // Usa a função executeSql para inserir ou atualizar o serviço no banco de dados
+                await executeSql(insertSql, params);
+                console.log('Service inserted successfully:', serviceName);
+            } catch (error) {
+                // Handle errors
+                console.error('Error inserting service:', error);
+            }
+        }
+    };
+
+
+
+    // const insertServices = async () => {
+    //     // Obtém os serviços relacionados ao ramo selecionado
+    //     const relatedServices = getRelatedServices(ramo);
+    //     // Cria a query SQL para inserir ou atualizar um serviço
+    //     const updateSql = `INSERT OR REPLACE INTO Servico (Nome, Ramo, EstabelecimentoID) VALUES (?, ?, ?)`;
+
+    //     // Insere ou atualiza todos os serviços relacionados ao novo ramo no banco de dados
+    //     for (let i = 0; i < relatedServices.length; i++) {
+    //         const serviceName = relatedServices[i];
+    //         const params = [serviceName, ramo, 1];
+
+    //         try {
+    //             // Usa a função executeSql para inserir ou atualizar o serviço no banco de dados
+    //             await executeSql(updateSql, params);
+    //         } catch (error) {
+    //             // Handle errors
+    //             console.error('Error updating/inserting service:', error);
+    //         }
+    //     }
+    // };
+
+    const getRelatedServices = (selectedService) => {
+        switch (selectedService) {
+            case "Salão de Beleza":
+                return relatedServiceSalaoOptions;
+            case "Oficina Mecânica":
+                return relatedServiceOficinaOptions;
+            case "Barbeiro":
+                return relatedServiceBarbeiroOptions;
+            default:
+                return [];
+        }
+    };
 
     const handleEditName = () => {
         setNameEditing(true);
-        setOriginalName(name); // Armazena o valor original
+        setOriginalName(name);
     };
 
     const handleEditCnpj = () => {
         setCnpjEditing(true);
-        setOriginalCnpj(cnpj); // Armazena o valor original
+        setOriginalCnpj(cnpj);
     };
 
     const handleEditRamo = () => {
+        setCardAberto(true);
         setRamoEditing(true);
-        setOriginalRamo(ramo); // Armazena o valor original
+        setOriginalRamo(ramo);
     };
 
     const handleCancelName = () => {
         setNameEditing(false);
-        setName(originalName); // Restaura o valor original
+        setName(originalName);
     };
 
     const handleCancelCnpj = () => {
         setCnpjEditing(false);
-        setCnpj(originalCnpj); // Restaura o valor original
+        setCnpj(originalCnpj);
     };
 
     const handleCancelRamo = () => {
         setRamoEditing(false);
-        setRamo(originalRamo); // Restaura o valor original
+        setRamo(originalRamo);
+        setCardAberto(false)
     };
+
+    const handleSaveName = () => {
+        handleSaveChanges();
+        setNameEditing(false);
+    };
+
+    const handleSaveCnpj = () => {
+        handleSaveChanges();
+        setCnpjEditing(false);
+    };
+
+    const handleSaveRamo = () => {
+        handleSaveChanges();
+        insertServices();
+        setCardAberto(false);
+        setRamoEditing(false)
+    };
+
 
     const navigation = useNavigation();
     function handleIr() {
@@ -94,6 +251,7 @@ const MeuPerfil = () => {
                                 setName(registro["Nome"]);
                                 setCnpj(registro["CNPJ"]);
                                 setRamo(registro["Ramo"]);
+                                setLogoTipoPath(registro["Logotipo"]);
                                 console.log(registro);
                             }
                         }
@@ -156,8 +314,9 @@ const MeuPerfil = () => {
 
     const handleEditarAgendamento = (appointment) => {
         navigation.navigate('EditarAgendamento', { appointmentData: appointment });
-
     }
+
+
 
     return (
         <>
@@ -165,7 +324,10 @@ const MeuPerfil = () => {
             <ScrollView>
                 <View style={styles.container}>
 
-                    <Image source={selectLogo('default')} style={{ width: 150, height: 150, alignSelf: 'center' }} />
+                    <Image
+                        source={logoTipoPath ? { uri: logoTipoPath } : require('../assets/Imagens/Logos/LogoPadrao.png')}
+                        style={{ width: 150, height: 150, alignSelf: 'center', marginBottom: 20 }}
+                    />
 
                     <Text style={styles.label}>Estabelecimento</Text>
                     <View style={styles.inputContainer}>
@@ -176,7 +338,7 @@ const MeuPerfil = () => {
                             editable={isNameEditing}
                         />
                         {isNameEditing ? (
-                            <TouchableOpacity onPress={() => setNameEditing(false)}>
+                            <TouchableOpacity onPress={handleSaveName}>
                                 <Text style={styles.editText}>Salvar</Text>
                             </TouchableOpacity>
                         ) : (
@@ -185,12 +347,11 @@ const MeuPerfil = () => {
                             </TouchableOpacity>
                         )}
                         {isNameEditing && (
-                            <TouchableOpacity onPress={() => handleCancelName(false)}>
+                            <TouchableOpacity onPress={handleCancelName}>
                                 <Text style={styles.removeText}>Cancelar</Text>
                             </TouchableOpacity>
                         )}
                     </View>
-
 
                     <Text style={styles.label}>CNPJ</Text>
                     <View style={styles.inputContainer}>
@@ -201,7 +362,7 @@ const MeuPerfil = () => {
                             editable={isCnpjEditing}
                         />
                         {isCnpjEditing ? (
-                            <TouchableOpacity onPress={() => handleEditCnpj(false)}>
+                            <TouchableOpacity onPress={handleSaveCnpj}>
                                 <Text style={styles.editText}>Salvar</Text>
                             </TouchableOpacity>
                         ) : (
@@ -210,7 +371,7 @@ const MeuPerfil = () => {
                             </TouchableOpacity>
                         )}
                         {isCnpjEditing && (
-                            <TouchableOpacity onPress={() => handleCancelCnpj(false)}>
+                            <TouchableOpacity onPress={handleCancelCnpj}>
                                 <Text style={styles.removeText}>Cancelar</Text>
                             </TouchableOpacity>
                         )}
@@ -225,7 +386,7 @@ const MeuPerfil = () => {
                             editable={isRamoEditing}
                         />
                         {isRamoEditing ? (
-                            <TouchableOpacity onPress={() => setRamoEditing(false)}>
+                            <TouchableOpacity onPress={handleSaveRamo}>
                                 <Text style={styles.editText}>Salvar</Text>
                             </TouchableOpacity>
                         ) : (
@@ -234,11 +395,30 @@ const MeuPerfil = () => {
                             </TouchableOpacity>
                         )}
                         {isRamoEditing && (
-                            <TouchableOpacity onPress={() => handleCancelRamo(false)}>
+                            <TouchableOpacity onPress={handleCancelRamo}>
                                 <Text style={styles.removeText}>Cancelar</Text>
                             </TouchableOpacity>
                         )}
                     </View>
+
+                    {/* Render the service selection card */}
+                    {cardAberto && (
+                        <View style={styles.card}>
+                            <Text style={styles.cardHeader}>Selecionar ramos</Text>
+                            <View style={styles.containerCheck}>
+                                {serviceOptions.map((service, index) => (
+                                    <View key={index} style={styles.checkboxContainer}>
+                                        <CheckBox
+                                            title={service}
+                                            checked={ramo === service}
+                                            onPress={() => setRamo(service)}
+                                            containerStyle={styles.checkbox}
+                                        />
+                                    </View>
+                                ))}
+                            </View>
+                        </View>
+                    )}
                 </View>
             </ScrollView>
         </>
@@ -251,6 +431,28 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: '#f0f0f0',
         marginTop: 50
+    },
+    checkbox: {
+        marginLeft: 15,
+        width: '90%'
+    },
+    cardHeader: {
+        color: Style.color,
+        fontWeight: 'bold',
+        alignSelf: 'center'
+    },
+    containerCheck: {
+        backgroundColor: '#ccc',
+        paddingVertical: 10,
+        borderRadius: 10,
+        marginBottom: 10,
+        width: '80%',
+        alignSelf: 'center',
+    },
+    checkboxContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 5,
     },
     containerAgendamentos: {
         flex: 1,

@@ -12,6 +12,9 @@ import { Picker } from '@react-native-picker/picker';
 import NavBar from './NavBar';
 import Toast from 'react-native-root-toast';
 import Colaboradores from './Colaboradores';
+import { Alert } from 'react-native';
+import { DateTimePickerModal } from 'react-native-modal-datetime-picker';
+
 
 async function getEstabelecimentoLogo(id) {
     const sql = 'SELECT Logotipo FROM Estabelecimento WHERE ID = ?';
@@ -49,6 +52,7 @@ const MainMenu = () => {
     const [originalCnpj, setOriginalCnpj] = useState(cnpj);
     const [originalRamo, setOriginalRamo] = useState(ramo);
     const [agendamentos, setAgendamentos] = useState([]);
+    const [logoTipoPath, setLogoTipoPath] = useState('')
     const ele = '';
 
     const today = new Date();
@@ -102,7 +106,7 @@ const MainMenu = () => {
                                 setName(registro["Nome"]);
                                 setCnpj(registro["CNPJ"]);
                                 setRamo(registro["Ramo"]);
-                                setLogotipoPath(registro["LogotipoPath"]); // Adicione esta linha
+                                setLogoTipoPath(registro["Logotipo"]); // Adicione esta linha
                                 console.log(registro);
                             }
                         }
@@ -134,7 +138,7 @@ const MainMenu = () => {
     }, []);
 
     const selectLogo = (defaultLogo) => {
-        return logotipoPath ? { uri: logotipoPath } : defaultLogo;
+        return logoTipoPath ? { uri: logoTipoPath } : defaultLogo;
     };
 
     const fetchAgendamentos = () => {
@@ -308,9 +312,38 @@ const MainMenu = () => {
     const [cardAberto, setCardAberto] = useState(false);
     const [mesSelecionado, setMesSelecionado] = useState(null);
     const [anoSelecionado, setAnoSelecionado] = useState(2000);
+    const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     const handleCalendarioClick = async () => {
         setCardAberto(true);
+        showDatePicker();
     }
+
+    const showDatePicker = () => {
+        setDatePickerVisibility(true);
+    };
+
+    const hideDatePicker = () => {
+        setDatePickerVisibility(false);
+    };
+
+    const handleDateConfirm = (date) => {
+        hideDatePicker();
+
+        // Obter dia, mês e ano a partir da data selecionada
+        const day = date.getDate();
+        const month = date.getMonth() + 1; // Os meses começam de 0
+        const year = date.getFullYear();
+
+        // Formatar a data para a sua representação desejada
+        const formattedDate = formatDate(new Date(year, month - 1, day));
+
+        // Atualizar o estado com a data selecionada
+        setCurrentDate(formattedDate);
+
+        // Fetch dos agendamentos para a data selecionada
+        fetchAgendamentos(formattedDate);
+    };
+
 
     const fecharCard = () => {
         setCardAberto(false);
@@ -361,6 +394,48 @@ const MainMenu = () => {
             handleNotification('Erro ao copiar dados!', ToastAndroid.SHORT);
         }
     };
+
+    const handleExcluir = (agendamentoID) => {
+        // Mostra um alerta de confirmação
+        Alert.alert(
+            'Confirmação',
+            'Tem certeza que deseja excluir este agendamento?',
+            [
+                {
+                    text: 'Cancelar',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Sim',
+                    onPress: () => {
+                        // Continua com a exclusão se o usuário clicar em "Sim"
+                        db.transaction(
+                            (tx) => {
+                                tx.executeSql(
+                                    'DELETE FROM Agendamento WHERE ID = ?',
+                                    [agendamentoID],
+                                    (_, result) => {
+                                        console.log('Agendamento excluído com sucesso:', result);
+                                        // Atualizar a lista de agendamentos após excluir
+                                        fetchAgendamentos();
+                                    },
+                                    (_, error) => {
+                                        console.error('Erro ao excluir agendamento:', error);
+                                    }
+                                );
+                            },
+                            (error) => {
+                                console.error('Erro na transação:', error);
+                            }
+                        );
+                    },
+                },
+            ],
+            { cancelable: false }
+        );
+    };
+
+
 
     useEffect(() => {
         // Função para verificar e atualizar status dos agendamentos
@@ -414,8 +489,10 @@ const MainMenu = () => {
             <NavBar />
             <ScrollView>
                 <View style={styles.container}>
-                    <Image source={selectLogo(require('default'))} style={{ width: 150, height: 150, alignSelf: 'center' }} />
-
+                    <Image
+                        source={logoTipoPath ? { uri: logoTipoPath } : require('../assets/Imagens/Logos/LogoPadrao.png')}
+                        style={{ width: 150, height: 150, alignSelf: 'center' }}
+                    />
                     <View>
                         <TouchableOpacity
                             style={styles.button}
@@ -459,52 +536,19 @@ const MainMenu = () => {
                                 <Text style={{ marginLeft: 10, fontSize: 20 }}>Calendário</Text>
                             </View>
                         </TouchableOpacity>
-
                         {/* Botão com ícone à direita */}
                         <TouchableOpacity onPress={() => handleDireitaClick()}>
                             <Icon name="arrow-right" size={30} color="black" />
                         </TouchableOpacity>
                     </View>
                     <View>
-                        {cardAberto && (
-                            <View style={styles.card}>
-                                <TouchableOpacity onPress={fecharCard}>
-                                    <Text style={styles.fecharCard}>X</Text>
-                                </TouchableOpacity>
-
-                                <Text style={styles.cardHeader}>Selecionar data</Text>
-
-                                {/* Picker para seleção de ano */}
-                                <Picker
-                                    selectedValue={anoSelecionado}
-                                    style={styles.pickerAno}
-                                    onValueChange={(valor) => handleAnoChange(valor)}
-                                >
-                                    {Array.from({ length: 101 }, (_, index) => 2000 + index).map((ano) => (
-                                        <Picker.Item key={ano} label={ano.toString()} value={ano} />
-                                    ))}
-                                </Picker>
-
-                                {/* Renderizar meses */}
-                                <View style={styles.mesesContainer}>
-                                    {['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'].map((mes) => (
-                                        <TouchableOpacity
-                                            key={mes}
-                                            style={styles.mes}
-                                            onPress={() => selecionarMes(mes)}
-                                        >
-                                            <Text style={styles.textoMeses}>{mes}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-
-                                {/* Renderizar dias do mês selecionado */}
-                                {mesSelecionado && (
-                                    <View style={styles.diasContainer}>
-                                        {renderizarDiasDoMes()}
-                                    </View>
-                                )}
-                            </View>
+                        {isDatePickerVisible && (
+                            <DateTimePickerModal
+                                isVisible={isDatePickerVisible}
+                                mode="date"
+                                onConfirm={handleDateConfirm}
+                                onCancel={hideDatePicker}
+                            />
                         )}
                     </View>
                     {hasAppointmentsForCurrentDate ? (
@@ -533,12 +577,17 @@ const MainMenu = () => {
                                                 <Text style={styles.cardText}>Horário: {appointment.Horario}</Text>
                                                 <Text style={styles.cardText}>Serviços: {appointment.Servicos}</Text>
                                                 <Text style={styles.cardText}>Colaborador: {JSON.parse(appointment.ColaboradorNome)[0]}</Text>
-                                                <TouchableOpacity
-                                                    onPress={() => handleCopiar(appointment)}
-                                                    style={styles.buttonCopiar}
-                                                >
-                                                    <Text style={styles.buttonCopiarText}>Copiar</Text>
-                                                </TouchableOpacity>
+                                                <View style={styles.buttonContainer}>
+                                                    <TouchableOpacity
+                                                        onPress={() => handleCopiar(appointment)}
+                                                        style={styles.buttonCopiar}
+                                                    >
+                                                        <Text style={styles.buttonCopiarText}>Copiar</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity style={styles.buttonExcluir} onPress={() => handleExcluir(appointment.ID)}>
+                                                        <Text style={styles.buttonCopiarText}>Excluir</Text>
+                                                    </TouchableOpacity>
+                                                </View>
                                             </View>
                                             <View style={getStatusStyle(appointment.Status, appointment.Data, appointment.Horario)}></View>
                                         </TouchableOpacity>
@@ -572,6 +621,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: '#f0f0f0',
         marginTop: 50
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 30,
+        marginTop: 10,
+        alignItems: 'center', // Centraliza os elementos horizontalmente
     },
     mesesContainer: {
         flexDirection: 'row',
@@ -758,6 +814,16 @@ const styles = StyleSheet.create({
     },
     buttonCopiar: {
         backgroundColor: 'green',
+        paddingVertical: 3,
+        borderRadius: 1,
+        marginBottom: 1,
+        marginTop: 5,
+        width: '30%',
+        alignSelf: 'left',
+        borderRadius: 10
+    },
+    buttonExcluir: {
+        backgroundColor: 'red',
         paddingVertical: 3,
         borderRadius: 1,
         marginBottom: 1,

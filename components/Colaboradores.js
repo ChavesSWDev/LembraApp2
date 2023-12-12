@@ -68,12 +68,13 @@ const Colaboradores = () => {
                     </TouchableOpacity>
                 </View>
                 <Text style={styles.TextoAzul}>Colaboradores cadastrados</Text>
-                {colaboradores.map((colaborador) => (
-                    <View key={colaborador.Id} style={styles.card}>
+                {colaboradores.map((colaborador, index) => (
+                    <View key={`${colaborador.Id}_${index}`} style={styles.card}>
                         <Text style={styles.cardHeader}>{colaborador.Nome}</Text>
                         <Text style={styles.cardText}>Colaborador da {estabelecimento.Nome}.</Text>
                     </View>
                 ))}
+
             </ScrollView>
         </>
     );
