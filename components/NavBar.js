@@ -32,7 +32,7 @@ const NavBar = () => {
 
     const goToMainMenu = () => {
         navigation.navigate('MainMenu');
-        if(isMenuOpen) {
+        if (isMenuOpen) {
             setIsMenuOpen(!isMenuOpen)
         }
     };
@@ -63,7 +63,7 @@ const NavBar = () => {
 
     return (
         <View style={styles.container}>
-            <Animated.View style={[styles.navBar, { transform: [{ translateX }], zIndex }, {perspective: 1000}]}>
+            <Animated.View style={[styles.navBar, { transform: [{ translateX }], zIndex }, { perspective: 1000 }]}>
                 <TouchableOpacity style={styles.navButton} onPress={toggleMenu}>
                     <Ionicons name="menu" size={24} color="black" />
                 </TouchableOpacity>

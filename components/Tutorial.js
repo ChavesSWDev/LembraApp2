@@ -12,34 +12,29 @@ const Tutorial = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [showConfirmation, setShowConfirmation] = useState(false); // Estado para controlar a exibição da confirmação
     const images = [
-        require("../assets/Imagens/Tutorial/Tutorial1.png"),
-        require("../assets/Imagens/Tutorial/Tutorial2.png"), 
-        require("../assets/Imagens/Tutorial/Tutorial3.png"), 
-        require("../assets/Imagens/Tutorial/Tutorial4.png"),
-        require("../assets/Imagens/Tutorial/Tutorial5.png"),
-        require("../assets/Imagens/Tutorial/Tutorial6.png"),
-        require("../assets/Imagens/Tutorial/Tutorial7.png"),
-        require("../assets/Imagens/Tutorial/Tutorial8.png"),
-        require("../assets/Imagens/Tutorial/Tutorial9.png"),
+        require("../assets/Imagens/Tutorial/tuto1.jpg"),
+        require("../assets/Imagens/Tutorial/tuto2real.jpg"), 
+        require("../assets/Imagens/Tutorial/tuto6.jpg"),
+        require("../assets/Imagens/Tutorial/tuto7.jpg"),
+        require("../assets/Imagens/Tutorial/tuto8.jpg"),
+        require("../assets/Imagens/Tutorial/tuto2.jpg"), 
+        require("../assets/Imagens/Tutorial/tuto3.jpg"),
+        require("../assets/Imagens/Tutorial/tuto4.jpg"),
+        require("../assets/Imagens/Tutorial/tuto5.jpg"),
+        require("../assets/Imagens/Tutorial/tuto9.jpg"),
+        require("../assets/Imagens/Tutorial/tuto13.jpg"),
+        require("../assets/Imagens/Tutorial/tuto14.jpg"),
+        require("../assets/Imagens/Tutorial/tuto10.jpg"),
+        require("../assets/Imagens/Tutorial/tuto11.jpg"),
+        require("../assets/Imagens/Tutorial/tuto12.jpg"),
+        
         require("../assets/Imagens/BoasVindas/BemVindo4.png"),
     ];
-    const texts = [
-        "Nesse botão, você irá adicionar um novo agendamento!", 
-        "Nessa tela você irá digitar os dados do seu agendamento", 
-        "Após adicionar os dados, essa tela irá mostrar todos seus agendamentos cadastrados!",
-        "Para excluir um agendamento, você pode clicar nesse botão X",
-        "Para visualizar seus agendamentos excluídos clique nesse botão",
-        "Para recuperar algum agendamento, clique nesse botão",
-        "Para excluir permanentemente um agendamento, clique nesse botão",
-        "Para excluir permanentemente todos os agendamentos de uma só vez, clique nesse botão",
-        "Para recuperar todos os agendamentos de uma só vez, clique nesse botão",
-        "Parabéns, você completou o tutorial!",
-    ]; 
 
     const nextImage = () => {
         if (currentIndex < images.length - 1) {
             setCurrentIndex(currentIndex + 1);
-            if (currentIndex === 8) {
+            if (currentIndex === 14) {
                 setShowConfirmation(true); // Mostrar confirmação quando o usuário apertar "CONTINUAR" na terceira imagem
             }
         } else {
@@ -67,7 +62,7 @@ const Tutorial = () => {
     return (
         <View style={styles.notasContainer}>
             <View style={{ alignItems: 'center' }}>
-                <Svg width="500" height="500">
+                <Svg width="100%" height="500">
                     <SvgImage
                         href={images[currentIndex]}
                         width="100%"
@@ -75,7 +70,6 @@ const Tutorial = () => {
                     />
                 </Svg>
             </View>
-            <Text style={styles.headingVerySmall}>{texts[currentIndex]}</Text>
 
             {showConfirmation ? ( // Renderizar os botões de confirmação quando showConfirmation for true
                 <View style={customStyles.buttonContainer}>
@@ -83,7 +77,7 @@ const Tutorial = () => {
                         style={customStyles.button}
                         onPress={() => handleConfirmation("SIM")}
                     >
-                        <Text style={customStyles.buttonText}>LEGAL !</Text>
+                        <Text style={customStyles.buttonText}>Tutorial finalizado !</Text>
                     </TouchableOpacity>
                 </View>
             ) : (

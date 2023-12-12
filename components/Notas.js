@@ -187,10 +187,11 @@ const Notas = ({ navigation, ...props }) => {
 
 export const styles = StyleSheet.create({
     notasContainer: {
-        paddingTop: 10,
+        paddingTop: 50,
         paddingHorizontal: 20,
         marginBottom: 70,
-        opacity: 0.9
+        opacity: 0.9,
+        marginTop:50
     },
     heading: {
         fontSize: 30,
